@@ -1,0 +1,30 @@
+# PlatformIO
+.pio/
+.piolibdeps/
+.pioenvs/
+
+# ESP-IDF / CMake build artifacts
+build/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+compile_commands.json
+sdkconfig
+sdkconfig.*
+managed_components/
+
+# VS Code / editor local settings
+.vscode/
+.history/
+
+# Operational system files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
