@@ -423,7 +423,7 @@ The table below maps the assignment requirements to the current repository state
 
 | Assignment requirement | Current repository state |
 |---|---|
-| Functional mobile robot with 3D-printed structure | Planned; not present in repository yet |
+| Functional mobile robot with 3D-printed structure | implemented through a remote control cart |
 | ESP32 as control unit | Configured as PlatformIO ESP-IDF target |
 | Distance sensors for environment perception | Planned; `distance_sensor` template exists |
 | Locomotion with motors and motor driver | Planned; `motor_driver` template exists |
