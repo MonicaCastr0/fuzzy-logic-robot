@@ -57,7 +57,7 @@ The planned prototype uses the following hardware:
 | 2 DC motors | Robot locomotion |
 | External motor power supply | Power source for the motors |
 | Voltage divider or logic level shifter | Protects the ESP32 when reading the HC-SR04 `ECHO` signal |
-| 3D-printed chassis | Physical robot structure |
+| 3D-printed chassis | Physical robot structure (in this case a remote control cart chassi) |
 
 ## Development Environment
 
@@ -423,7 +423,7 @@ The table below maps the assignment requirements to the current repository state
 
 | Assignment requirement | Current repository state |
 |---|---|
-| Functional mobile robot with 3D-printed structure | implemented through a remote control cart |
+| Functional mobile robot with 3D-printed structure | implemented through a remote control cart chassi |
 | ESP32 as control unit | Configured as PlatformIO ESP-IDF target |
 | Distance sensors for environment perception | Planned; `distance_sensor` template exists |
 | Locomotion with motors and motor driver | Planned; `motor_driver` template exists |
