@@ -159,9 +159,9 @@ RobotController
 |---|---:|---:|---|
 | `robot_controller` | Yes | Yes | Prints template logs |
 | `app_config` | Yes | Not yet used by `RobotController` | Defines planned pins and constants |
-| `distance_sensor` | Yes | Not yet | Template sensor module |
-| `motor_driver` | Yes | Not yet | Template motor driver module |
-| `fuzzy_controller` | Yes | Not yet | Template fuzzy controller module |
+| `distance_sensor` | Yes | yes | Template sensor module |
+| `motor_driver` | Yes | yes | Template motor driver module |
+| `fuzzy_controller` | Yes | yes | Template fuzzy controller module |
 
 Although the sensor, motor driver, fuzzy controller, and app configuration components already exist, the currently executed firmware still only calls the minimal `RobotController` template.
 
