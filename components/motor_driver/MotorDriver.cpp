@@ -20,21 +20,41 @@ void MotorDriver::init() {
 }
 
 void MotorDriver::enable() {
-    ESP_LOGI(TAG, "Driver enabled - template");
+    gpio_set_level(AppConfig::STBY_PIN, 1);
+    ESP_LOGI(TAG, "Motor driver enabled");
 }
 
 void MotorDriver::disable() {
-    ESP_LOGI(TAG, "Driver disabled - template");
+    stop();
+    gpio_set_level(AppConfig::STBY_PIN, 0);
+    ESP_LOGI(TAG, "Motor driver disabled");
 }
 
 void MotorDriver::drive(int motorASpeed, int motorBSpeed) {
-    ESP_LOGI(TAG, "Drive command - Motor A: %d | Motor B: %d",
-             motorASpeed,
-             motorBSpeed);
+    const MotorPins motorA{
+        AppConfig::AIN1_PIN,
+        AppConfig::AIN2_PIN,
+        AppConfig::PWMA_PIN,
+        AppConfig::MOTOR_A_CHANNEL
+    };
+
+    const MotorPins motorB{
+        AppConfig::BIN1_PIN,
+        AppConfig::BIN2_PIN,
+        AppConfig::PWMB_PIN,
+        AppConfig::MOTOR_B_CHANNEL
+    };
+
+    setMotor(motorA, motorASpeed);
+    setMotor(motorB, motorBSpeed);
+
+    ESP_LOGI(TAG, "Driver command applied | motor A speed: %d | motor B speed: %d", 
+            motorASpeed, 
+            motorBSpeed);
 }
 
 void MotorDriver::stop() {
-    ESP_LOGI(TAG, "Motors stopped - template");
+    drive(AppConfig::SPEED_STOP, AppConfig::SPEED_STOP);
 }
 
 // private function that sets the digital pins that control the direction 
@@ -68,18 +88,26 @@ void MotorDriver::setupGpio(){
 
     ESP_LOGI(TAG, "motor GPIO pins configured");
 }
-
+// LEDC time configuration
+//   ↓
+// LEDC channel configuration
+//   ↓
+// GPIO
 void MotorDriver::setupPwm() {
+    //LEDC timer configuration structure, used to configure the timer that will be used by the PWM channels for the motors
     ledc_timer_config_t timerConfig{};
 
+    // LEDC component configuration
     timerConfig.speed_mode = AppConfig::MOTOR_PWM_MODE;
     timerConfig.timer_num = AppConfig::MOTOR_PWM_TIMER;
     timerConfig.duty_resolution = AppConfig::PWM_RESOLUTION;
     timerConfig.freq_hz = AppConfig::PWM_FREQUENCY_HZ;
     timerConfig.clk_cfg = LEDC_AUTO_CLK;
 
+    // configure the timer with the specified configuration, this will be used by the PWM channels for the motors
     ESP_ERROR_CHECK(ledc_timer_config(&timerConfig));
 
+    // now we can configure the PWM channels for the motors, this will set the GPIO pins for the PWM signals and associate them with the timer configured above
     setupPwmChannel(AppConfig::PWMA_PIN, AppConfig::MOTOR_A_CHANNEL);
     setupPwmChannel(AppConfig::PWMB_PIN, AppConfig::MOTOR_B_CHANNEL);
 
@@ -88,9 +116,12 @@ void MotorDriver::setupPwm() {
              AppConfig::PWM_MAX_DUTY);
 }
 
+// this function configures a single PWM channel with the specified GPIO pin and channel number, 
+// it is used to configure both motor A and motor B channels
 void MotorDriver::setupPwmChannel(gpio_num_t pwmPin, ledc_channel_t channel){
     ledc_channel_config_t channelConfig{};
 
+    // LEDC channel configuration structure, used to configure the PWM channel for a motor
     channelConfig.gpio_num = pwmPin;
     channelConfig.speed_mode = AppConfig::MOTOR_PWM_MODE;
     channelConfig.channel = channel;
@@ -99,9 +130,13 @@ void MotorDriver::setupPwmChannel(gpio_num_t pwmPin, ledc_channel_t channel){
     channelConfig.duty = 0;
     channelConfig.hpoint = 0;
 
+    // configure the PWM channel with the specified configuration, 
+    // this will set the GPIO pin for the PWM signal and associate it with the timer configured above
     ESP_ERROR_CHECK(ledc_channel_config(&channelConfig));
 }
 
+// this function sets the direction and speed of a motor based on the specified MotorPins structure and speed value, 
+// it is used to control both motor A and motor B
 void MotorDriver::setMotor(const MotorPins& motor, int speed) {
     const int clampedSpeed = clampSpeed(speed);
 
@@ -124,6 +159,8 @@ void MotorDriver::setMotor(const MotorPins& motor, int speed) {
     setPwmDuty(motor.channel, 0);
 }
 
+// this function sets the duty cycle of a PWM channel based on the specified channel number and duty value, 
+// it is used to control the speed of the motors by setting the appropriate duty cycle for the PWM signal
 void MotorDriver::setPwmDuty(ledc_channel_t channel, int duty) {
     int safeDuty = duty;
 
@@ -147,6 +184,7 @@ void MotorDriver::setPwmDuty(ledc_channel_t channel, int duty) {
     ));
 }
 
+// this function clamps the speed value to be within the range of -PWM_MAX_DUTY to PWM_MAX_DUTY,
 int MotorDriver::clampSpeed(int speed) const {
     if (speed > AppConfig::PWM_MAX_DUTY) {
         return AppConfig::PWM_MAX_DUTY;
@@ -159,6 +197,8 @@ int MotorDriver::clampSpeed(int speed) const {
     return speed;
 }
 
+// this function returns the absolute value of an integer, 
+// it is used to convert negative speed values to positive duty cycle values for the PWM signal
 int MotorDriver::absoluteValue(int value) const {
     return value < 0 ? -value : value;
 }
