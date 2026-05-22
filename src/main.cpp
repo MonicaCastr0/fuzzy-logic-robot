@@ -12,5 +12,4 @@ extern "C" void app_main() {
         robot.update();
         vTaskDelay(pdMS_TO_TICKS(1000));
     }
-
 }

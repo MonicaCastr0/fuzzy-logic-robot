@@ -88,7 +88,8 @@ void MotorDriver::setupGpio(){
 
     ESP_LOGI(TAG, "motor GPIO pins configured");
 }
-// LEDC time configuration
+
+// LEDC timer configuration
 //   ↓
 // LEDC channel configuration
 //   ↓
