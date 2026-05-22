@@ -1,19 +1,110 @@
 {
   "version": 1,
-  "author": "robo-fuzzy-esp32",
+  "author": "fuzzy-logic-robot",
   "editor": "wokwi",
   "parts": [
     {
       "type": "wokwi-esp32-devkit-v1",
       "id": "esp",
       "top": 0,
-      "left": 0,
+      "left": -260,
       "attrs": {}
+    },
+    {
+      "type": "wokwi-led",
+      "id": "led_stby",
+      "top": -180,
+      "left": 120,
+      "attrs": {
+        "color": "green",
+        "label": "STBY"
+      }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "led_ain1",
+      "top": -120,
+      "left": 120,
+      "attrs": {
+        "color": "yellow",
+        "label": "AIN1"
+      }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "led_ain2",
+      "top": -60,
+      "left": 120,
+      "attrs": {
+        "color": "yellow",
+        "label": "AIN2"
+      }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "led_pwma",
+      "top": 0,
+      "left": 120,
+      "attrs": {
+        "color": "blue",
+        "label": "PWMA"
+      }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "led_bin1",
+      "top": 80,
+      "left": 120,
+      "attrs": {
+        "color": "red",
+        "label": "BIN1"
+      }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "led_bin2",
+      "top": 140,
+      "left": 120,
+      "attrs": {
+        "color": "red",
+        "label": "BIN2"
+      }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "led_pwmb",
+      "top": 200,
+      "left": 120,
+      "attrs": {
+        "color": "blue",
+        "label": "PWMB"
+      }
     }
   ],
   "connections": [
     [ "esp:TX0", "$serialMonitor:RX", "", [] ],
-    [ "esp:RX0", "$serialMonitor:TX", "", [] ]
+    [ "esp:RX0", "$serialMonitor:TX", "", [] ],
+
+    [ "esp:D13", "led_stby:A", "green", [ "h40" ] ],
+    [ "led_stby:C", "esp:GND.1", "black", [ "h-20", "v220", "h-360" ] ],
+
+    [ "esp:D26", "led_ain1:A", "yellow", [ "h50" ] ],
+    [ "led_ain1:C", "esp:GND.1", "black", [ "h-20", "v160", "h-360" ] ],
+
+    [ "esp:D27", "led_ain2:A", "yellow", [ "h60" ] ],
+    [ "led_ain2:C", "esp:GND.1", "black", [ "h-20", "v100", "h-360" ] ],
+
+    [ "esp:D25", "led_pwma:A", "blue", [ "h70" ] ],
+    [ "led_pwma:C", "esp:GND.1", "black", [ "h-20", "v40", "h-360" ] ],
+
+    [ "esp:D32", "led_bin1:A", "red", [ "h80" ] ],
+    [ "led_bin1:C", "esp:GND.1", "black", [ "h-20", "v-40", "h-360" ] ],
+
+    [ "esp:D33", "led_bin2:A", "red", [ "h90" ] ],
+    [ "led_bin2:C", "esp:GND.1", "black", [ "h-20", "v-100", "h-360" ] ],
+
+    [ "esp:D14", "led_pwmb:A", "blue", [ "h100" ] ],
+    [ "led_pwmb:C", "esp:GND.1", "black", [ "h-20", "v-160", "h-360" ] ]
   ],
   "serialMonitor": {
     "display": "terminal"

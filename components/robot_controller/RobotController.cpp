@@ -2,6 +2,7 @@
 #include "AppConfig.hpp"
 
 #include "esp_log.h"
+#include "freertos/FreeRTOS.h"
 
 static const char* TAG = "RobotController";
 
@@ -19,6 +20,19 @@ void RobotController::init() {
 }
 
 void RobotController::update() {
+
+    if (AppConfig::MOTOR_DRIVER_TEST_MODE) {
+        ESP_LOGI(TAG, "Running motor driver test mode");
+        motorDriver_.drive(AppConfig::SPEED_LOW, AppConfig::SPEED_LOW);
+        vTaskDelay(pdMS_TO_TICKS(2000));
+        motorDriver_.drive(AppConfig::SPEED_MEDIUM, AppConfig::SPEED_MEDIUM);
+        vTaskDelay(pdMS_TO_TICKS(2000));
+        motorDriver_.drive(AppConfig::SPEED_HIGH, AppConfig::SPEED_HIGH);
+        vTaskDelay(pdMS_TO_TICKS(2000));
+        motorDriver_.stop();
+        return;
+    }
+
     ESP_LOGI(TAG, "Running robot control cycle");
     const float frontCmDistance = distanceSensor_.readDistanceCm();
 
