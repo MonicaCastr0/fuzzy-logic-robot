@@ -3,6 +3,9 @@ idf_component_register(
     INCLUDE_DIRS "include"
     REQUIRES
         app_config
+        esp_driver_gpio
+        esp_timer
+        esp_rom
         log
 )
 
