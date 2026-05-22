@@ -79,6 +79,15 @@
         "color": "blue",
         "label": "PWMB"
       }
+    },
+    {
+      "type": "wokwi-hc-sr04",
+      "id": "ultrasonic_front",
+      "top": -260,
+      "left": -20,
+      "attrs": {
+        "distance": "100"
+      }
     }
   ],
   "connections": [
@@ -104,7 +113,12 @@
     [ "led_bin2:C", "esp:GND.1", "black", [ "h-20", "v-100", "h-360" ] ],
 
     [ "esp:D14", "led_pwmb:A", "blue", [ "h100" ] ],
-    [ "led_pwmb:C", "esp:GND.1", "black", [ "h-20", "v-160", "h-360" ] ]
+    [ "led_pwmb:C", "esp:GND.1", "black", [ "h-20", "v-160", "h-360" ] ],
+  
+    [ "esp:VIN", "ultrasonic_front:VCC", "red", [ "h0" ] ],
+    [ "esp:GND.2", "ultrasonic_front:GND", "black", [ "h0" ] ],
+    [ "esp:D19", "ultrasonic_front:TRIG", "green", [ "h0" ] ],
+    [ "esp:D18", "ultrasonic_front:ECHO", "blue", [ "h0" ] ]
   ],
   "serialMonitor": {
     "display": "terminal"

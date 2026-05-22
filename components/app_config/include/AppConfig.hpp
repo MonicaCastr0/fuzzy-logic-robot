@@ -53,6 +53,6 @@ static constexpr int SPEED_HIGH = 200;
 // ===============================
 // test flag for the RobotController, if true it will run a motor test
 // ===============================
-static constexpr bool MOTOR_DRIVER_TEST_MODE = true;
+static constexpr bool MOTOR_DRIVER_TEST_MODE = false;
 
 }
