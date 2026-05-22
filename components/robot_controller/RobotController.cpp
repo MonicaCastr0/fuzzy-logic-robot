@@ -21,6 +21,8 @@ void RobotController::init() {
 
 void RobotController::update() {
 
+    // running the motor in test mode with different speeds to verify that the motor driver is 
+    // working correctly without needing to rely on the distance sensor and fuzzy controller logic
     if (AppConfig::MOTOR_DRIVER_TEST_MODE) {
         ESP_LOGI(TAG, "Running motor driver test mode");
         motorDriver_.drive(AppConfig::SPEED_LOW, AppConfig::SPEED_LOW);
