@@ -4,6 +4,8 @@ Autonomous mobile robot project based on an **ESP32 DevKit V1**, **ESP-IDF**, **
 
 The goal of this project is to build a functional autonomous mobile robot capable of detecting obstacles and adjusting its movement using fuzzy logic.
 
+---
+
 ## Academic Project Requirements
 
 The final project is expected to present:
@@ -20,23 +22,27 @@ The final project is expected to present:
 - Practical tests and behavior analysis.
 - Technical documentation and a functional prototype demonstration.
 
+---
+
 ## Current Project Status
 
-The project is currently in the **firmware architecture and motor driver preparation stage**.
+The project is currently in the **modular firmware and motor driver validation stage**.
 
-The following parts are already established:
+The current firmware already has:
 
 - ESP-IDF project configured through PlatformIO.
 - C++ firmware entry point using `extern "C" void app_main()`.
-- Modular structure under `components/`.
-- `RobotController` acting as the main application coordinator.
-- `AppConfig` centralizing pin mapping and PWM constants.
-- `DistanceSensor` component created as a template with simulated distance readings.
-- `FuzzyController` component created as a template with simple input/output structures.
-- `MotorDriver` component partially implemented for the TB6612FNG motor driver.
-- Wokwi simulation used to validate firmware boot and serial logs.
+- Modular component-based structure under `components/`.
+- `RobotController` coordinating the main control flow.
+- `AppConfig` centralizing pin mapping, PWM constants, base speeds, and test flags.
+- `MotorDriver` structured to control the TB6612FNG through GPIO and LEDC PWM.
+- Wokwi LEDs representing the TB6612FNG control signals.
+- `DistanceSensor` component present, but still acting as a template/simulated distance source in the current repository snapshot.
+- `FuzzyController` component present, but still acting as a template.
 
-At this moment, the firmware is not yet a complete robot control system. It already has the modular architecture needed for the final project, but some modules are still in template or partial implementation stages.
+The firmware is not yet a complete autonomous robot controller. It currently validates architecture, motor-control signal generation, and simulation setup. The next development stages are physical testing, HC-SR04 implementation, basic obstacle avoidance, and then fuzzy logic.
+
+---
 
 ## Hardware Target
 
@@ -50,6 +56,8 @@ At this moment, the firmware is not yet a complete robot control system. It alre
 | Voltage divider or logic level shifter | Protects ESP32 GPIO when reading HC-SR04 `ECHO` |
 | 3D-printed chassis | Physical robot structure |
 
+---
+
 ## Development Environment
 
 Recommended environment:
@@ -60,12 +68,14 @@ Recommended environment:
 | PlatformIO | Embedded project/build management |
 | ESP-IDF | Native ESP32 framework |
 | C++ | Firmware implementation language |
-| Wokwi | Firmware/circuit simulation |
+| Wokwi | Firmware and circuit simulation |
 | Git/GitHub | Version control and collaboration |
+
+---
 
 ## PlatformIO Configuration
 
-The project currently targets a generic ESP32 DevKit-compatible board:
+The project targets a generic ESP32 DevKit-compatible board:
 
 ```ini
 [env:esp32dev]
@@ -77,9 +87,65 @@ monitor_speed = 115200
 
 The `esp32dev` board is being used for the ESP32 DevKit V1 / ESP-WROOM-32 style board.
 
+---
+
+## Current Repository Structure
+
+Expected current structure:
+
+```text
+fuzzy-logic-robot/
+│
+├── CMakeLists.txt
+├── platformio.ini
+├── wokwi.toml
+├── diagram.json
+├── README.md
+│
+├── include/
+├── lib/
+├── test/
+│
+├── src/
+│   ├── CMakeLists.txt
+│   └── main.cpp
+│
+└── components/
+    ├── app_config/
+    │   ├── CMakeLists.txt
+    │   └── include/
+    │       └── AppConfig.hpp
+    │
+    ├── distance_sensor/
+    │   ├── CMakeLists.txt
+    │   ├── DistanceSensor.cpp
+    │   └── include/
+    │       └── DistanceSensor.hpp
+    │
+    ├── fuzzy_controller/
+    │   ├── CMakeLists.txt
+    │   ├── FuzzyController.cpp
+    │   └── include/
+    │       └── FuzzyController.hpp
+    │
+    ├── motor_driver/
+    │   ├── CMakeLists.txt
+    │   ├── MotorDriver.cpp
+    │   └── include/
+    │       └── MotorDriver.hpp
+    │
+    └── robot_controller/
+        ├── CMakeLists.txt
+        ├── RobotController.cpp
+        └── include/
+            └── RobotController.hpp
+```
+
+---
+
 ## Current Firmware Flow
 
-The current application entry point is located in:
+The application entry point is located in:
 
 ```text
 src/main.cpp
@@ -114,35 +180,39 @@ extern "C" void app_main() {
 }
 ```
 
-The `extern "C"` is required because ESP-IDF expects `app_main()` to use C linkage, even when the application is written in C++.
+The `extern "C"` declaration is required because ESP-IDF expects `app_main()` to use C linkage, even when the firmware is written in C++.
+
+---
 
 ## Current Modular Architecture
-
-The project is organized around ESP-IDF components:
-
-```text
-src/
-  main.cpp
-  CMakeLists.txt
-
-components/
-  app_config/
-  distance_sensor/
-  motor_driver/
-  fuzzy_controller/
-  robot_controller/
-```
 
 ### `app_config`
 
 Centralizes project constants such as:
 
-- HC-SR04 pins.
-- TB6612FNG pins.
-- PWM frequency.
-- PWM resolution.
+- HC-SR04 pin mapping.
+- TB6612FNG pin mapping.
+- PWM frequency and resolution.
 - LEDC timer/channel configuration.
-- Base motor speeds.
+- Base motor speed values.
+- Motor driver test mode flag.
+
+Current planned pins:
+
+```text
+HC-SR04:
+TRIG → GPIO19
+ECHO → GPIO18
+
+TB6612FNG:
+STBY → GPIO13
+AIN1 → GPIO26
+AIN2 → GPIO27
+PWMA → GPIO25
+BIN1 → GPIO32
+BIN2 → GPIO33
+PWMB → GPIO14
+```
 
 ### `robot_controller`
 
@@ -154,7 +224,7 @@ Current responsibility:
 DistanceSensor → FuzzyController → MotorDriver
 ```
 
-Current `update()` flow:
+Current normal flow:
 
 ```text
 read front distance
@@ -166,15 +236,28 @@ evaluate fuzzy controller
 send motor speeds to motor driver
 ```
 
+The project also has a motor driver test mode controlled through `AppConfig::MOTOR_DRIVER_TEST_MODE`. When enabled, the controller can run predefined motor commands to validate the motor driver outputs without depending on distance sensor or fuzzy logic.
+
 ### `distance_sensor`
 
 Template module for the HC-SR04 ultrasonic sensor.
 
 Current status:
 
-- `init()` logs the configured TRIG/ECHO pins.
-- `readDistanceCm()` returns a simulated value.
-- Real HC-SR04 timing logic is not implemented yet.
+- Public interface exists:
+  - `init()`
+  - `readDistanceCm()`
+- Current implementation still returns a simulated distance value in the repository snapshot.
+- Real trigger/echo timing implementation is the next firmware task, unless already implemented locally.
+
+Expected future responsibility:
+
+- Configure `TRIG` as output.
+- Configure `ECHO` as input.
+- Send a 10 µs trigger pulse.
+- Measure the `ECHO` pulse duration.
+- Convert the pulse duration to centimeters.
+- Return an invalid/safe value on timeout.
 
 ### `fuzzy_controller`
 
@@ -186,69 +269,34 @@ Current status:
 - Defines `FuzzyOutput`.
 - Receives the front distance as input.
 - Currently returns stopped motor speeds.
-- Real fuzzy membership functions and rules are not implemented yet.
+- Real fuzzy membership functions, rules, inference, and defuzzification are not implemented yet.
 
 ### `motor_driver`
 
-Module responsible for the TB6612FNG motor driver.
+Module responsible for controlling the TB6612FNG motor driver.
 
-Current status:
+Current public interface:
 
-- Public interface exists:
-  - `init()`
-  - `enable()`
-  - `disable()`
-  - `drive(int motorASpeed, int motorBSpeed)`
-  - `stop()`
-- Private implementation methods already exist for:
-  - GPIO setup.
-  - PWM setup.
-  - PWM channel setup.
-  - Per-motor speed handling.
-  - PWM duty update.
-  - Speed clamping.
-  - Absolute value conversion.
+```cpp
+void init();
+void enable();
+void disable();
+void drive(int motorASpeed, int motorBSpeed);
+void stop();
+```
 
-The GPIO/PWM internal structure is being implemented, but the public methods still need to be fully connected to the private movement logic.
+Current internal responsibilities:
 
-## Planned Pin Mapping
+- Configure motor direction GPIOs.
+- Configure `STBY`.
+- Configure LEDC PWM timer.
+- Configure LEDC PWM channels.
+- Clamp motor speed values.
+- Convert negative speeds to absolute PWM duty.
+- Apply motor direction based on speed sign.
+- Update PWM duty cycle.
 
-### HC-SR04
-
-| Function | ESP32 GPIO | Direction | Description |
-|---|---:|---|---|
-| TRIG | GPIO19 | Output | ESP32 sends trigger pulse to sensor |
-| ECHO | GPIO18 | Input | ESP32 receives echo pulse from sensor |
-
-Important: the HC-SR04 is a 5V sensor. The `ECHO` pin should not be connected directly to an ESP32 GPIO. Use a voltage divider or logic level shifter.
-
-### TB6612FNG
-
-| TB6612FNG Pin | ESP32 GPIO | Direction | Description |
-|---|---:|---|---|
-| STBY | GPIO13 | Output | Enables/disables the motor driver |
-| AIN1 | GPIO26 | Output | Motor A direction control |
-| AIN2 | GPIO27 | Output | Motor A direction control |
-| PWMA | GPIO25 | PWM output | Motor A speed control |
-| BIN1 | GPIO32 | Output | Motor B direction control |
-| BIN2 | GPIO33 | Output | Motor B direction control |
-| PWMB | GPIO14 | PWM output | Motor B speed control |
-
-### TB6612FNG Physical Connections
-
-These connections are not controlled directly by firmware, but are required in the physical circuit:
-
-| TB6612FNG Pin | Connection |
-|---|---|
-| VCC | ESP32 3.3V logic supply |
-| VM | External motor power supply |
-| GND | Common ground with ESP32 and motor power supply |
-| AO1 / AO2 | Motor A terminals |
-| BO1 / BO2 | Motor B terminals |
-
-## Motor Speed Convention
-
-The `MotorDriver` is being designed to accept speeds in the range:
+The motor driver is designed to accept speed values in the range:
 
 ```text
 -255 to 255
@@ -273,7 +321,40 @@ speed < 0  → IN1 = LOW, IN2 = HIGH, PWM = abs(speed)
 speed == 0 → IN1 = LOW, IN2 = LOW, PWM = 0
 ```
 
-## Build Instructions
+---
+
+## Wokwi Simulation
+
+The project includes Wokwi configuration files:
+
+```text
+wokwi.toml
+diagram.json
+```
+
+The current Wokwi setup includes:
+
+- ESP32 DevKit V1.
+- Serial monitor.
+- LEDs representing the TB6612FNG control signals.
+
+Current LED mapping:
+
+| Signal | ESP32 GPIO | Wokwi representation |
+|---|---:|---|
+| `STBY` | GPIO13 | LED |
+| `AIN1` | GPIO26 | LED |
+| `AIN2` | GPIO27 | LED |
+| `PWMA` | GPIO25 | LED with PWM brightness |
+| `BIN1` | GPIO32 | LED |
+| `BIN2` | GPIO33 | LED |
+| `PWMB` | GPIO14 | LED with PWM brightness |
+
+These LEDs do not simulate the motor physics. They only show the logical signals that the ESP32 would send to the TB6612FNG.
+
+---
+
+## Compilation
 
 To build the firmware:
 
@@ -294,70 +375,187 @@ Remove-Item -Recurse -Force .pio
 pio run
 ```
 
-## Wokwi Simulation
+---
 
-The project includes Wokwi configuration files:
+## Simulation
 
-```text
-wokwi.toml
-diagram.json
-```
-
-Current Wokwi usage:
-
-1. Build the project:
-
-```bash
-pio run
-```
-
-2. Start the Wokwi simulator from VS Code:
+After compiling, start the Wokwi simulation from VS Code:
 
 ```text
 Ctrl + Shift + P
 Wokwi: Start Simulator
 ```
 
-Current simulation goal:
+The simulation should open the ESP32 circuit and show serial logs in the Wokwi terminal.
+
+Current simulation goals:
 
 - Validate firmware boot.
 - Validate ESP-IDF logs.
 - Validate modular control cycle.
-- Later, visualize TB6612FNG control signals using LEDs.
-- Later, simulate HC-SR04 distance input.
+- Visualize TB6612FNG control signals using LEDs.
+- Prepare the project for HC-SR04 simulation.
+
+---
+
+## Uploading the Firmware to the ESP32
+
+After the project builds successfully, connect the ESP32 DevKit V1 to the computer using a USB cable.
+
+Upload the firmware with:
+
+```bash
+pio run -t upload
+```
+
+PlatformIO will try to detect the upload port automatically.
+
+If automatic detection fails, list available devices:
+
+```bash
+pio device list
+```
+
+Then specify the upload port manually.
+
+Example on Windows:
+
+```bash
+pio run -t upload --upload-port COM3
+```
+
+Replace `COM3` with the port shown on your machine.
+
+After uploading, open the serial monitor:
+
+```bash
+pio device monitor
+```
+
+The project is configured with:
+
+```ini
+monitor_speed = 115200
+```
+
+If needed, specify the port manually:
+
+```bash
+pio device monitor --port COM3 --baud 115200
+```
+
+### Common ESP32 upload notes
+
+Some ESP32 DevKit V1 boards enter bootloader mode automatically. Others may require holding the **BOOT** button during the upload process.
+
+Recommended upload procedure if upload fails:
+
+```text
+1. Start: pio run -t upload
+2. When PlatformIO shows "Connecting..."
+3. Hold BOOT on the ESP32
+4. Release BOOT after upload starts
+```
+
+After upload, reset the board if the application does not start automatically.
+
+### Physical test recommendation
+
+Before connecting all components, upload and test the firmware with only the ESP32 connected through USB.
+
+Then test hardware in this order:
+
+```text
+1. ESP32 alone
+2. ESP32 + serial monitor
+3. ESP32 + HC-SR04 with voltage divider on ECHO
+4. ESP32 + TB6612FNG without motors
+5. ESP32 + TB6612FNG + one motor
+6. ESP32 + TB6612FNG + two motors
+```
+
+---
+
+## Physical Wiring Notes
+
+### HC-SR04
+
+| HC-SR04 Pin | Connection |
+|---|---|
+| VCC | ESP32 5V / VIN |
+| GND | ESP32 GND |
+| TRIG | GPIO19 |
+| ECHO | Voltage divider / level shifter → GPIO18 |
+
+Important: the HC-SR04 is a 5V sensor. The `ECHO` pin should not be connected directly to an ESP32 GPIO. Use a voltage divider or logic level shifter.
+
+### TB6612FNG
+
+| TB6612FNG Pin | ESP32 / Circuit Connection |
+|---|---|
+| VCC | ESP32 3.3V logic supply |
+| VM | External motor power supply |
+| GND | Common ground with ESP32 and motor power supply |
+| STBY | GPIO13 |
+| AIN1 | GPIO26 |
+| AIN2 | GPIO27 |
+| PWMA | GPIO25 |
+| BIN1 | GPIO32 |
+| BIN2 | GPIO33 |
+| PWMB | GPIO14 |
+| AO1 / AO2 | Motor A terminals |
+| BO1 / BO2 | Motor B terminals |
+
+Critical rule:
+
+```text
+ESP32 GND, TB6612FNG GND, and motor power supply GND must be connected together.
+```
+
+Do not power the motors from the ESP32 `3V3` pin.
+
+---
 
 ## Current Expected Runtime Logs
 
-The expected runtime logs should show the modular cycle:
+Expected logs may include:
 
 ```text
-RobotController initialized successfully
-Running robot control cycle
-Simulated reading from distance sensor
-Fuzzy input - front distance: ...
-Drive command - Motor A: ... | Motor B: ...
+DistanceSensor: Distance sensor initialized | TRIG GPIO: 19 | ECHO GPIO: 18
+MotorDriver: Initializing motor driver TB6612FNG
+MotorDriver: motor GPIO pins configured
+MotorDriver: PWM configured | frequency: 5000 Hz | max duty 255
+MotorDriver: Motors stopped - template
+MotorDriver: Motor driver initialized successfully
+FuzzyController: Initializing fuzzy controller - template
+MotorDriver: Driver enabled - template
+RobotController: RobotController initialized successfully
 ```
 
-As the project evolves, logs should also show:
+When the normal control loop is active, expected logs include:
 
 ```text
-Motor GPIO pins configured
-PWM configured
-Motor driver initialized successfully
+RobotController: Running robot control cycle
+DistanceSensor: Distance read: 100.00 cm | pulse: 5800 us
+FuzzyController: Fuzzy input - front distance: 100.00 cm
+MotorDriver: Drive command - Motor A: 0 | Motor B: 0
 ```
+
+---
 
 ## Current Limitations
 
-The project does not yet:
+The project does not yet fully provide:
 
-- Read the real HC-SR04 sensor.
-- Use actual echo pulse timing.
-- Fully apply motor commands through the public `drive()` method.
-- Simulate TB6612FNG with visual Wokwi LEDs.
-- Run a real fuzzy inference system.
-- Control the physical robot.
-- Include physical test documentation.
-- Include 3D chassis documentation.
+- Complete fuzzy inference.
+- Final autonomous obstacle avoidance behavior.
+- Physical robot validation.
+- 3D chassis documentation.
+- Formal test plan and test results documentation.
+
+The current firmware is a strong foundation for the final robot, but it still needs sensor implementation, behavior logic, fuzzy control, hardware testing, and documentation.
+
+---
 
 ## Development Roadmap
 
@@ -372,7 +570,7 @@ Status: completed.
 
 ### Stage 2 — Modular Architecture
 
-Status: completed/in progress.
+Status: completed.
 
 - Create component-based firmware structure.
 - Add `RobotController`.
@@ -382,45 +580,39 @@ Status: completed/in progress.
 - Add `FuzzyController`.
 - Connect `RobotController` to the main modules.
 
-### Stage 3 — Motor Driver
+### Stage 3 — Motor Driver and Wokwi LEDs
 
-Status: in progress.
+Status: completed / validation in progress.
 
-Next tasks:
+- Create TB6612FNG motor driver abstraction.
+- Configure GPIO/PWM internals.
+- Add Wokwi LEDs for motor driver control signals.
+- Use motor driver test mode to validate direction and PWM signals.
 
-- Connect `enable()` to `STBY = HIGH`.
-- Connect `disable()` to stop motors and set `STBY = LOW`.
-- Connect `drive()` to `setMotor()` for Motor A and Motor B.
-- Connect `stop()` to `drive(0, 0)`.
-- Validate PWM and direction signals in Wokwi.
+### Stage 4 — Physical Bench Testing
 
-### Stage 4 — Wokwi Signal Visualization
+Status: next immediate practical step.
 
-Planned.
-
-- Add LEDs for:
-  - `STBY`
-  - `AIN1`
-  - `AIN2`
-  - `BIN1`
-  - `BIN2`
-  - `PWMA`
-  - `PWMB`
-- Use Wokwi to visually inspect motor driver control signals.
+- Upload firmware to ESP32.
+- Validate logs through serial monitor.
+- Test ESP32 with no external components.
+- Test HC-SR04 with voltage divider.
+- Test TB6612FNG without motors.
+- Test motors with low PWM values.
 
 ### Stage 5 — Distance Sensor
 
-Planned.
+Status: completed / validation in progress.
 
 - Configure HC-SR04 GPIOs.
 - Send trigger pulse.
 - Measure echo pulse duration.
 - Convert duration to distance in centimeters.
-- Validate readings in Wokwi.
+- Validate readings in Wokwi and then physically.
 
 ### Stage 6 — Basic Obstacle Avoidance
 
-Planned.
+Status: planned.
 
 - Implement simple threshold-based behavior before fuzzy logic.
 - Example:
@@ -430,7 +622,7 @@ Planned.
 
 ### Stage 7 — Fuzzy Logic
 
-Planned.
+Status: planned.
 
 - Define fuzzy input variables.
 - Define fuzzy output variables.
@@ -441,16 +633,16 @@ Planned.
 
 ### Stage 8 — Physical Prototype
 
-Planned.
+Status: planned.
 
 - Wire ESP32, HC-SR04, TB6612FNG, and motors.
-- Add voltage divider/level shifter to HC-SR04 ECHO.
+- Add voltage divider or level shifter to HC-SR04 `ECHO`.
 - Test motor driver and sensor separately.
 - Assemble robot on 3D-printed chassis.
 
 ### Stage 9 — Tests and Documentation
 
-Planned.
+Status: planned.
 
 - Create test plan.
 - Record practical results.
@@ -458,12 +650,14 @@ Planned.
 - Document fuzzy rules and observed behavior.
 - Prepare final demonstration.
 
+---
+
 ## Suggested Git Workflow
 
 Use one branch per task:
 
 ```bash
-git checkout -b feature/motor-driver
+git checkout -b feature/distance-sensor
 ```
 
 After changes:
@@ -472,8 +666,8 @@ After changes:
 pio run
 git status
 git add .
-git commit -m "Implement motor driver GPIO and PWM setup"
-git push -u origin feature/motor-driver
+git commit -m "Implement HC-SR04 distance sensor"
+git push -u origin feature/distance-sensor
 ```
 
 Recommended branch examples:
@@ -489,6 +683,8 @@ feature/fuzzy-controller
 docs/pinout
 docs/test-plan
 ```
+
+---
 
 ## Final Project Goal
 
