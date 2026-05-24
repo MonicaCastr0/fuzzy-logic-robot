@@ -49,7 +49,8 @@ float DistanceSensor::readDistanceCm() {
 
     gpio_set_level(AppConfig::TRIG_PIN, 1); // set the trigger pin high to start the measurement
     esp_rom_delay_us(10);
-    
+    gpio_set_level(AppConfig::TRIG_PIN, 0); // set the trigger pin low to end the pulse
+
     const int64_t waitStartUs = esp_timer_get_time();
 
     while (gpio_get_level(AppConfig::ECHO_PIN) == 0) {
@@ -63,7 +64,7 @@ float DistanceSensor::readDistanceCm() {
 
     while (gpio_get_level(AppConfig::ECHO_PIN) == 1) {
         if ((esp_timer_get_time() - pulseStartUs) > ECHO_TIMEOUT_US) {
-            ESP_LOGW(TAG, "Timeout waiting for echo to go LWO");
+            ESP_LOGW(TAG, "Timeout waiting for echo to go LOW");
             return INVALID_DISTANCE_CM;
         }
     }
