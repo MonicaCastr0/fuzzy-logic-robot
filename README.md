@@ -1,8 +1,8 @@
 # Fuzzy Logic Robot
 
-Autonomous mobile robot project based on an **ESP32 DevKit V1**, **ESP-IDF**, **C++**, **PlatformIO**, **Wokwi**, DC motors, an ultrasonic distance sensor, a TB6612FNG motor driver, and a future fuzzy logic decision module for obstacle avoidance.
+Autonomous mobile robot project based on an **ESP32 DevKit V1**, **ESP-IDF**, **C++**, **PlatformIO**, **Wokwi**, DC motors, an **HC-SR04 ultrasonic distance sensor**, a **TB6612FNG HS-166 motor driver**, and a fuzzy logic decision module for obstacle avoidance.
 
-The goal of this project is to build a functional autonomous mobile robot capable of detecting obstacles and adjusting its movement using fuzzy logic.
+The final goal is to deliver a functional autonomous robot capable of perceiving obstacles and adjusting movement using fuzzy logic.
 
 ---
 
@@ -13,8 +13,8 @@ The final project is expected to present:
 - A functional mobile robot with a 3D-modeled and 3D-printed structure.
 - ESP32 as the main control unit.
 - Integration of distance sensors for environment perception.
-- Locomotion control using DC motors and a motor driver.
-- A fuzzy logic decision module.
+- Locomotion control using motors and a motor driver.
+- Implementation of a fuzzy logic decision module.
 - Definition of fuzzy input and output variables.
 - Construction of fuzzy rules for speed and direction adjustment.
 - Autonomous navigation with obstacle avoidance in a controlled environment.
@@ -26,21 +26,22 @@ The final project is expected to present:
 
 ## Current Project Status
 
-The project is currently in the **modular firmware and motor driver validation stage**.
+The project is currently in the **firmware validation and hardware bench-test preparation stage**.
 
-The current firmware already has:
+The current repository already contains:
 
 - ESP-IDF project configured through PlatformIO.
 - C++ firmware entry point using `extern "C" void app_main()`.
-- Modular component-based structure under `components/`.
+- Modular component-based firmware structure under `components/`.
 - `RobotController` coordinating the main control flow.
 - `AppConfig` centralizing pin mapping, PWM constants, base speeds, and test flags.
-- `MotorDriver` structured to control the TB6612FNG through GPIO and LEDC PWM.
+- `MotorDriver` implemented to control the TB6612FNG through GPIO and LEDC PWM.
 - Wokwi LEDs representing the TB6612FNG control signals.
-- `DistanceSensor` component present, but still acting as a template/simulated distance source in the current repository snapshot.
-- `FuzzyController` component present, but still acting as a template.
+- `DistanceSensor` implemented for HC-SR04 trigger/echo reading.
+- `FuzzyController` present as a template; real fuzzy rules are not implemented yet.
+- A motor driver test mode that validates forward, reverse, turning, stop, disable, and re-enable behavior.
 
-The firmware is not yet a complete autonomous robot controller. It currently validates architecture, motor-control signal generation, and simulation setup. The next development stages are physical testing, HC-SR04 implementation, basic obstacle avoidance, and then fuzzy logic.
+The project does not yet implement autonomous obstacle avoidance or fuzzy inference. The next development phase is to validate the physical components and then implement a simple obstacle-avoidance baseline before adding fuzzy logic.
 
 ---
 
@@ -90,8 +91,6 @@ The `esp32dev` board is being used for the ESP32 DevKit V1 / ESP-WROOM-32 style 
 ---
 
 ## Current Repository Structure
-
-Expected current structure:
 
 ```text
 fuzzy-logic-robot/
@@ -184,11 +183,11 @@ The `extern "C"` declaration is required because ESP-IDF expects `app_main()` to
 
 ---
 
-## Current Modular Architecture
+## Modular Architecture
 
 ### `app_config`
 
-Centralizes project constants such as:
+Centralizes project constants:
 
 - HC-SR04 pin mapping.
 - TB6612FNG pin mapping.
@@ -197,7 +196,7 @@ Centralizes project constants such as:
 - Base motor speed values.
 - Motor driver test mode flag.
 
-Current planned pins:
+Current pins:
 
 ```text
 HC-SR04:
@@ -216,48 +215,36 @@ PWMB → GPIO14
 
 ### `robot_controller`
 
-Coordinates the main robot control cycle.
+Coordinates the robot control cycle.
 
-Current responsibility:
+Normal flow:
 
 ```text
 DistanceSensor → FuzzyController → MotorDriver
 ```
 
-Current normal flow:
-
-```text
-read front distance
-   ↓
-create fuzzy input
-   ↓
-evaluate fuzzy controller
-   ↓
-send motor speeds to motor driver
-```
-
-The project also has a motor driver test mode controlled through `AppConfig::MOTOR_DRIVER_TEST_MODE`. When enabled, the controller can run predefined motor commands to validate the motor driver outputs without depending on distance sensor or fuzzy logic.
+When `AppConfig::MOTOR_DRIVER_TEST_MODE` is enabled, the controller ignores the sensor/fuzzy path and runs a predefined motor test sequence.
 
 ### `distance_sensor`
 
-Template module for the HC-SR04 ultrasonic sensor.
+Responsible for HC-SR04 distance reading.
 
-Current status:
+Current behavior:
 
-- Public interface exists:
-  - `init()`
-  - `readDistanceCm()`
-- Current implementation still returns a simulated distance value in the repository snapshot.
-- Real trigger/echo timing implementation is the next firmware task, unless already implemented locally.
+- Configures `TRIG` as output.
+- Configures `ECHO` as input.
+- Sends the trigger pulse.
+- Measures the echo pulse duration with ESP-IDF timing utilities.
+- Converts the pulse duration to distance in centimeters.
+- Returns an invalid/safe value on timeout.
 
-Expected future responsibility:
+Expected distance conversion:
 
-- Configure `TRIG` as output.
-- Configure `ECHO` as input.
-- Send a 10 µs trigger pulse.
-- Measure the `ECHO` pulse duration.
-- Convert the pulse duration to centimeters.
-- Return an invalid/safe value on timeout.
+```text
+distance_cm = echo_pulse_duration_us / 58.0
+```
+
+Important physical note: the HC-SR04 `ECHO` signal is 5V. It must be reduced before entering the ESP32 GPIO.
 
 ### `fuzzy_controller`
 
@@ -269,13 +256,13 @@ Current status:
 - Defines `FuzzyOutput`.
 - Receives the front distance as input.
 - Currently returns stopped motor speeds.
-- Real fuzzy membership functions, rules, inference, and defuzzification are not implemented yet.
+- Real fuzzy membership functions, inference rules, and defuzzification are not implemented yet.
 
 ### `motor_driver`
 
-Module responsible for controlling the TB6612FNG motor driver.
+Responsible for controlling the TB6612FNG motor driver.
 
-Current public interface:
+Public interface:
 
 ```cpp
 void init();
@@ -285,7 +272,7 @@ void drive(int motorASpeed, int motorBSpeed);
 void stop();
 ```
 
-Current internal responsibilities:
+Internal responsibilities:
 
 - Configure motor direction GPIOs.
 - Configure `STBY`.
@@ -296,7 +283,7 @@ Current internal responsibilities:
 - Apply motor direction based on speed sign.
 - Update PWM duty cycle.
 
-The motor driver is designed to accept speed values in the range:
+The motor driver accepts speed values in the range:
 
 ```text
 -255 to 255
@@ -323,6 +310,74 @@ speed == 0 → IN1 = LOW, IN2 = LOW, PWM = 0
 
 ---
 
+## Motor Driver Test Mode
+
+The firmware includes a test mode controlled by:
+
+```cpp
+AppConfig::MOTOR_DRIVER_TEST_MODE
+```
+
+When enabled, `RobotController::update()` runs a predefined sequence to validate the TB6612FNG control signals without relying on the distance sensor or fuzzy logic.
+
+Current test sequence:
+
+```cpp
+if (AppConfig::MOTOR_DRIVER_TEST_MODE) {
+    ESP_LOGI(TAG, "Running motor driver test mode");
+
+    motorDriver_.drive(AppConfig::SPEED_LOW, AppConfig::SPEED_LOW);
+    vTaskDelay(pdMS_TO_TICKS(2000));
+
+    motorDriver_.drive(AppConfig::SPEED_MEDIUM, AppConfig::SPEED_MEDIUM);
+    vTaskDelay(pdMS_TO_TICKS(2000));
+
+    motorDriver_.drive(AppConfig::SPEED_HIGH, AppConfig::SPEED_HIGH);
+    vTaskDelay(pdMS_TO_TICKS(2000));
+
+    ESP_LOGI(TAG, "Testing reverse");
+    motorDriver_.drive(-(AppConfig::SPEED_LOW), -(AppConfig::SPEED_LOW));
+    vTaskDelay(pdMS_TO_TICKS(2000));
+
+    ESP_LOGI(TAG, "Testing right turn");
+    motorDriver_.drive(-(AppConfig::SPEED_LOW), (AppConfig::SPEED_LOW));
+    vTaskDelay(pdMS_TO_TICKS(2000));
+
+    ESP_LOGI(TAG, "Testing left turn");
+    motorDriver_.drive((AppConfig::SPEED_LOW), -(AppConfig::SPEED_LOW));
+    vTaskDelay(pdMS_TO_TICKS(2000));
+
+    ESP_LOGI(TAG, "Motor driver test completed, stopping motors");
+    motorDriver_.stop();
+    vTaskDelay(pdMS_TO_TICKS(2000));
+
+    ESP_LOGI(TAG, "Disabling motor driver after test");
+    motorDriver_.disable();
+    vTaskDelay(pdMS_TO_TICKS(2000));
+
+    motorDriver_.enable();
+    vTaskDelay(pdMS_TO_TICKS(2000));
+
+    return;
+}
+```
+
+Expected signal behavior during the test:
+
+| Test step | Expected signal behavior |
+|---|---|
+| Forward low/medium/high | `STBY`, `AIN1`, `PWMA`, `BIN1`, and `PWMB` active. `AIN2` and `BIN2` inactive. PWM brightness increases by speed level. |
+| Reverse | `AIN2` and `BIN2` active instead of `AIN1` and `BIN1`. `PWMA` and `PWMB` active. |
+| Right turn | Motor A reverse and Motor B forward: `AIN2`, `PWMA`, `BIN1`, `PWMB` active. |
+| Left turn | Motor A forward and Motor B reverse: `AIN1`, `PWMA`, `BIN2`, `PWMB` active. |
+| Stop | Direction and PWM signals stop. `STBY` remains HIGH. |
+| Disable | All motor signals stop, including `STBY`. |
+| Re-enable | Only `STBY` should become HIGH again. |
+
+This test mode is intended for Wokwi LED visualization and physical bench validation with low PWM values.
+
+---
+
 ## Wokwi Simulation
 
 The project includes Wokwi configuration files:
@@ -337,6 +392,7 @@ The current Wokwi setup includes:
 - ESP32 DevKit V1.
 - Serial monitor.
 - LEDs representing the TB6612FNG control signals.
+- HC-SR04 simulation support, depending on the current `diagram.json`.
 
 Current LED mapping:
 
@@ -350,7 +406,7 @@ Current LED mapping:
 | `BIN2` | GPIO33 | LED |
 | `PWMB` | GPIO14 | LED with PWM brightness |
 
-These LEDs do not simulate the motor physics. They only show the logical signals that the ESP32 would send to the TB6612FNG.
+These LEDs do not simulate motor physics. They only show the logical signals that the ESP32 would send to the TB6612FNG.
 
 ---
 
@@ -394,7 +450,7 @@ Current simulation goals:
 - Validate ESP-IDF logs.
 - Validate modular control cycle.
 - Visualize TB6612FNG control signals using LEDs.
-- Prepare the project for HC-SR04 simulation.
+- Validate the motor driver test sequence.
 
 ---
 
@@ -459,21 +515,6 @@ Recommended upload procedure if upload fails:
 
 After upload, reset the board if the application does not start automatically.
 
-### Physical test recommendation
-
-Before connecting all components, upload and test the firmware with only the ESP32 connected through USB.
-
-Then test hardware in this order:
-
-```text
-1. ESP32 alone
-2. ESP32 + serial monitor
-3. ESP32 + HC-SR04 with voltage divider on ECHO
-4. ESP32 + TB6612FNG without motors
-5. ESP32 + TB6612FNG + one motor
-6. ESP32 + TB6612FNG + two motors
-```
-
 ---
 
 ## Physical Wiring Notes
@@ -516,29 +557,47 @@ Do not power the motors from the ESP32 `3V3` pin.
 
 ---
 
-## Current Expected Runtime Logs
+## Physical Bench-Test Order
 
-Expected logs may include:
+Before assembling the full robot, test the hardware incrementally:
 
 ```text
-DistanceSensor: Distance sensor initialized | TRIG GPIO: 19 | ECHO GPIO: 18
-MotorDriver: Initializing motor driver TB6612FNG
-MotorDriver: motor GPIO pins configured
-MotorDriver: PWM configured | frequency: 5000 Hz | max duty 255
-MotorDriver: Motors stopped - template
-MotorDriver: Motor driver initialized successfully
-FuzzyController: Initializing fuzzy controller - template
-MotorDriver: Driver enabled - template
-RobotController: RobotController initialized successfully
+1. ESP32 alone
+2. ESP32 + serial monitor
+3. ESP32 + HC-SR04 with voltage divider on ECHO
+4. ESP32 + TB6612FNG without motors
+5. ESP32 + TB6612FNG + one motor
+6. ESP32 + TB6612FNG + two motors
+```
+
+Start motor tests with low PWM values to reduce electrical and mechanical risk.
+
+---
+
+## Current Expected Runtime Logs
+
+When motor test mode is enabled, expected logs include:
+
+```text
+RobotController initialized successfully
+Running motor driver test mode
+Driver command applied | motor A speed: 80 | motor B speed: 80
+Driver command applied | motor A speed: 140 | motor B speed: 140
+Driver command applied | motor A speed: 200 | motor B speed: 200
+Testing reverse
+Testing right turn
+Testing left turn
+Motor driver test completed, stopping motors
+Disabling motor driver after test
 ```
 
 When the normal control loop is active, expected logs include:
 
 ```text
-RobotController: Running robot control cycle
-DistanceSensor: Distance read: 100.00 cm | pulse: 5800 us
-FuzzyController: Fuzzy input - front distance: 100.00 cm
-MotorDriver: Drive command - Motor A: 0 | Motor B: 0
+Running robot control cycle
+Distance read: ... cm | pulse: ... us
+Fuzzy input - front distance: ...
+Driver command applied | motor A speed: ... | motor B speed: ...
 ```
 
 ---
@@ -547,13 +606,13 @@ MotorDriver: Drive command - Motor A: 0 | Motor B: 0
 
 The project does not yet fully provide:
 
-- Complete fuzzy inference.
+- Real fuzzy inference.
 - Final autonomous obstacle avoidance behavior.
 - Physical robot validation.
 - 3D chassis documentation.
 - Formal test plan and test results documentation.
 
-The current firmware is a strong foundation for the final robot, but it still needs sensor implementation, behavior logic, fuzzy control, hardware testing, and documentation.
+The current firmware is a strong foundation for the final robot, but it still needs behavior logic, fuzzy control, physical testing, and final documentation.
 
 ---
 
@@ -589,18 +648,7 @@ Status: completed / validation in progress.
 - Add Wokwi LEDs for motor driver control signals.
 - Use motor driver test mode to validate direction and PWM signals.
 
-### Stage 4 — Physical Bench Testing
-
-Status: next immediate practical step.
-
-- Upload firmware to ESP32.
-- Validate logs through serial monitor.
-- Test ESP32 with no external components.
-- Test HC-SR04 with voltage divider.
-- Test TB6612FNG without motors.
-- Test motors with low PWM values.
-
-### Stage 5 — Distance Sensor
+### Stage 4 — Distance Sensor
 
 Status: completed / validation in progress.
 
@@ -609,6 +657,17 @@ Status: completed / validation in progress.
 - Measure echo pulse duration.
 - Convert duration to distance in centimeters.
 - Validate readings in Wokwi and then physically.
+
+### Stage 5 — Physical Bench Testing
+
+Status: next practical step.
+
+- Upload firmware to ESP32.
+- Validate logs through serial monitor.
+- Test ESP32 with no external components.
+- Test HC-SR04 with voltage divider.
+- Test TB6612FNG without motors.
+- Test motors with low PWM values.
 
 ### Stage 6 — Basic Obstacle Avoidance
 
@@ -657,7 +716,7 @@ Status: planned.
 Use one branch per task:
 
 ```bash
-git checkout -b feature/distance-sensor
+git checkout -b feature/basic-obstacle-avoidance
 ```
 
 After changes:
@@ -666,8 +725,8 @@ After changes:
 pio run
 git status
 git add .
-git commit -m "Implement HC-SR04 distance sensor"
-git push -u origin feature/distance-sensor
+git commit -m "Implement basic obstacle avoidance"
+git push -u origin feature/basic-obstacle-avoidance
 ```
 
 Recommended branch examples:
