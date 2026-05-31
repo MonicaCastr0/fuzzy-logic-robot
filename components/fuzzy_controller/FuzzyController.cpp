@@ -12,42 +12,43 @@ void FuzzyController::init() {
 }
 
 FuzzyOutput FuzzyController::evaluate(const FuzzyInput& input) {
-    FuzzyOutput output{};
-    
     const float distance = input.frontDistanceCm;
+    
+    FuzzyOutput output{};
     
     ESP_LOGI(TAG, "Decision input | front distance: %.2f cm", distance);
 
     if (distance < 0.0f){
-        output.motorASpeed = AppConfig::SPEED_STOP;
-        output.motorBSpeed = AppConfig::SPEED_STOP;
-        ESP_LOGI(TAG, "Decision: invalid distance -> stop");
+        ESP_LOGW(TAG, "Decision: invalid distance -> stop");
+        output.motorASpeed = AppConfig::TRACTION_STOP;
+        output.motorBSpeed = AppConfig::STEERING_STOP;
+        
         return output;
     }
 
-    if (distance <= 15.0f) {
-        output.motorASpeed = AppConfig::SPEED_STOP;
-        output.motorBSpeed = AppConfig::SPEED_STOP;
+    if (distance <= AppConfig::OBSTACLE_TOO_CLOSE_CM) {
         ESP_LOGI(TAG, "Decision: obstacle too close -> stop");
+        output.motorASpeed = AppConfig::TRACTION_STOP;
+        output.motorBSpeed = AppConfig::STEERING_STOP;
         return output;
     }
 
-    if (distance <= 30.0f) {
-        output.motorASpeed = -AppConfig::SPEED_LOW;
-        output.motorBSpeed = AppConfig::SPEED_LOW;
-        ESP_LOGI(TAG, "Decision: obstacle near -> turn right");
+    if (distance <= AppConfig::OBSTACLE_NEAR_CM) {
+        ESP_LOGI(TAG, "Decision: obstacle near -> reverse and turn right");
+        output.motorASpeed = -AppConfig::TRACTION_SLOW;
+        output.motorBSpeed = AppConfig::STEERING_RIGHT;
         return output;
     }
 
-    if (distance <= 70.9f) {
-        output.motorASpeed = AppConfig::SPEED_LOW;
-        output.motorBSpeed = AppConfig::SPEED_LOW;
+    if (distance <= AppConfig::OBSTACLE_CAUTION_CM) {
         ESP_LOGI(TAG, "Decision: caution zone -> move slowly");
+        output.motorASpeed = AppConfig::TRACTION_SLOW;
+        output.motorBSpeed = AppConfig::STEERING_STOP;
         return output;
     }
 
-    output.motorASpeed = AppConfig::SPEED_MEDIUM;
-    output.motorBSpeed = AppConfig::SPEED_MEDIUM;
+    output.motorASpeed = AppConfig::TRACTION_CRUISE;
+    output.motorBSpeed = AppConfig::STEERING_STOP;
     ESP_LOGI(TAG, "Decision: path clear -> move forward");
 
     return output;

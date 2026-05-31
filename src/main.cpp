@@ -1,5 +1,6 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "AppConfig.hpp"
 
 #include "RobotController.hpp"
 
@@ -10,6 +11,6 @@ extern "C" void app_main() {
 
     while (true) {
         robot.update();
-        vTaskDelay(pdMS_TO_TICKS(500));
+        vTaskDelay(pdMS_TO_TICKS(AppConfig::ROBOT_UPDATE_INTERVAL_MS));
     }
 }
