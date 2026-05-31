@@ -51,8 +51,35 @@ static constexpr int SPEED_MEDIUM = 140;
 static constexpr int SPEED_HIGH = 200;
 
 // ===============================
+// Basic obstacle avoidance thresholds - can be changed later or made more complex with fuzzy logic
+// ===============================
+static constexpr float OBSTACLE_TOO_CLOSE_CM = 15.0f;
+static constexpr float OBSTACLE_NEAR_CM = 35.0f;
+static constexpr float OBSTACLE_CAUTION_CM = 70.0f;
+
+// ===============================
+// Traction/steering semantic speeds
+// Motor A = rear traction
+// Motor B = front steering
+// ===============================
+static constexpr int TRACTION_STOP = SPEED_STOP;
+static constexpr int TRACTION_SLOW = SPEED_LOW;
+static constexpr int TRACTION_CRUISE = SPEED_MEDIUM;
+
+static constexpr int STEERING_STOP = SPEED_STOP;
+static constexpr int STEERING_SPEED = SPEED_LOW;
+
+static constexpr int STEERING_RIGHT = STEERING_SPEED;
+static constexpr int STEERING_LEFT = -STEERING_SPEED;
+
+// ===============================
 // test flag for the RobotController, if true it will run a motor test
 // ===============================
 static constexpr bool MOTOR_DRIVER_TEST_MODE = false;
+
+// ===============================
+// Main control loop
+// ===============================
+static constexpr int ROBOT_UPDATE_INTERVAL_MS = 200;
 
 }
