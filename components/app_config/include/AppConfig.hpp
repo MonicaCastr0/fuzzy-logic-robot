@@ -82,4 +82,10 @@ static constexpr bool MOTOR_DRIVER_TEST_MODE = false;
 // ===============================
 static constexpr int ROBOT_UPDATE_INTERVAL_MS = 200;
 
+// ===============================
+// Steering pulse control
+// ===============================
+static constexpr int STEERING_PULSE_DURATION_MS = 200;
+static constexpr int STEERING_PULSE_COOLDOWN_MS = 600;
+
 }

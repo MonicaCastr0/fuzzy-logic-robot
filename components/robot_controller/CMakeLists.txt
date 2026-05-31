@@ -3,6 +3,7 @@ idf_component_register(
     INCLUDE_DIRS "include"
     REQUIRES
         log
+        esp_timer
         motor_driver
         distance_sensor
         fuzzy_controller

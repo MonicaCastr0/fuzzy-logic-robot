@@ -2,6 +2,7 @@
 #include "AppConfig.hpp"
 
 #include "esp_log.h"
+#include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
 
 static const char* TAG = "RobotController";
@@ -20,34 +21,41 @@ void RobotController::init() {
 }
 
 void RobotController::update() {
-
-    // running the motor in test mode with different speeds to verify that the motor driver is 
-    // working correctly without needing to rely on the distance sensor and fuzzy controller logic
     if (AppConfig::MOTOR_DRIVER_TEST_MODE) {
-        ESP_LOGI(TAG, "Running motor driver test mode"); // here, STDBY, AIN1, PWMA, BIN1 AND PWMB should be sending signals
+        ESP_LOGI(TAG, "Running motor driver test mode");
+
         motorDriver_.drive(AppConfig::SPEED_LOW, AppConfig::SPEED_LOW);
         vTaskDelay(pdMS_TO_TICKS(2000));
+
         motorDriver_.drive(AppConfig::SPEED_MEDIUM, AppConfig::SPEED_MEDIUM);
         vTaskDelay(pdMS_TO_TICKS(2000));
+
         motorDriver_.drive(AppConfig::SPEED_HIGH, AppConfig::SPEED_HIGH);
         vTaskDelay(pdMS_TO_TICKS(2000));
+
         ESP_LOGI(TAG, "Testing reverse");
-        motorDriver_.drive(-(AppConfig::SPEED_LOW), -(AppConfig::SPEED_LOW)); // reverse, here, AIN2 and BIN2 should be sending signals instead of AIN1 and BIN1
+        motorDriver_.drive(-AppConfig::SPEED_LOW, -AppConfig::SPEED_LOW);
         vTaskDelay(pdMS_TO_TICKS(2000));
+
         ESP_LOGI(TAG, "Testing right turn");
-        motorDriver_.drive(-(AppConfig::SPEED_LOW), (AppConfig::SPEED_LOW)); // turn right, here, BIN1 should be sending signal but not AIN1, and AIN2 should be sending signal but not BIN2
+        motorDriver_.drive(-AppConfig::SPEED_LOW, AppConfig::SPEED_LOW);
         vTaskDelay(pdMS_TO_TICKS(2000));
+
         ESP_LOGI(TAG, "Testing left turn");
-        motorDriver_.drive((AppConfig::SPEED_LOW), -(AppConfig::SPEED_LOW)); // turn left, here, AIN1 should be sending signal but not BIN1, and BIN2 should be sending signal but not AIN2
+        motorDriver_.drive(AppConfig::SPEED_LOW, -AppConfig::SPEED_LOW);
         vTaskDelay(pdMS_TO_TICKS(2000));
+
         ESP_LOGI(TAG, "Motor driver test completed, stopping motors");
-        motorDriver_.stop(); // here, all signals should stop, only STDBY should remain HIGH
+        motorDriver_.stop();
         vTaskDelay(pdMS_TO_TICKS(2000));
+
         ESP_LOGI(TAG, "Disabling motor driver after test");
-        motorDriver_.disable(); // here, all signals should stop, including STDBY, the motors should be completely disabled
+        motorDriver_.disable();
         vTaskDelay(pdMS_TO_TICKS(2000));
-        motorDriver_.enable(); // re-enable the motor driver, only STDBY should be high again
+
+        motorDriver_.enable();
         vTaskDelay(pdMS_TO_TICKS(2000));
+
         return;
     }
 
@@ -57,7 +65,106 @@ void RobotController::update() {
     FuzzyInput input{};
     input.frontDistanceCm = frontCmDistance;
 
-    const FuzzyOutput output = fuzzyController_.evaluate(input);
+    const FuzzyOutput requestedOutput = fuzzyController_.evaluate(input);
+    const FuzzyOutput safeOutput = applySteeringPulseControl(requestedOutput);
 
-    motorDriver_.drive(output.motorASpeed, output.motorBSpeed);
+    motorDriver_.drive(safeOutput.motorASpeed, safeOutput.motorBSpeed);
+}
+
+FuzzyOutput RobotController::applySteeringPulseControl(const FuzzyOutput& requestedOutput) {
+    FuzzyOutput output = requestedOutput;
+
+    const bool wantsSteering = (requestedOutput.motorBSpeed != AppConfig::STEERING_STOP);
+
+    if (!wantsSteering) {
+        resetSteeringPulse();
+        return output;
+    }
+
+    const int64_t currentTimeMs = nowMs();
+
+    if (steeringPulseState_ == SteeringPulseState::Idle) {
+        steeringPulseState_ = SteeringPulseState::Pulsing;
+        steeringStateStartTimeMs_ = currentTimeMs;
+        activeSteeringSpeed_ = requestedOutput.motorBSpeed;
+
+        ESP_LOGI(TAG, "Steering pulse started | steering speed: %d", activeSteeringSpeed_);
+
+        return output;
+    }
+
+    if (steeringPulseState_ == SteeringPulseState::Pulsing) {
+        if (requestedOutput.motorBSpeed != activeSteeringSpeed_) {
+            activeSteeringSpeed_ = requestedOutput.motorBSpeed;
+            steeringStateStartTimeMs_ = currentTimeMs;
+
+            ESP_LOGI(TAG, "Steering pulse direction changed | steering speed: %d", activeSteeringSpeed_);
+            
+            return output;
+        }
+
+        const int64_t elapsedMs = currentTimeMs - steeringStateStartTimeMs_;
+
+        if (elapsedMs >= AppConfig::STEERING_PULSE_DURATION_MS) {
+            steeringPulseState_ = SteeringPulseState::Cooldown;
+            steeringStateStartTimeMs_ = currentTimeMs;
+
+            output.motorBSpeed = AppConfig::STEERING_STOP;
+
+            ESP_LOGI(TAG, "Steering pulse finished | cooldown started");
+
+            return output;
+        }
+
+        output.motorBSpeed = activeSteeringSpeed_;
+        return output;
+    }
+
+    if (steeringPulseState_ == SteeringPulseState::Cooldown) {
+        if (requestedOutput.motorBSpeed != activeSteeringSpeed_) {
+            steeringPulseState_ = SteeringPulseState::Pulsing;
+            steeringStateStartTimeMs_ = currentTimeMs;
+            activeSteeringSpeed_ = requestedOutput.motorBSpeed;
+
+            output.motorBSpeed = activeSteeringSpeed_;
+
+            ESP_LOGI(TAG, "Steering cooldown interrupted by direction change | steering speed: %d", activeSteeringSpeed_);
+        
+            return output;
+        }
+
+        const int64_t elapsedMs = currentTimeMs - steeringStateStartTimeMs_;
+
+        if (elapsedMs >= AppConfig::STEERING_PULSE_COOLDOWN_MS) {
+            steeringPulseState_ = SteeringPulseState::Pulsing;
+            steeringStateStartTimeMs_ = currentTimeMs;
+            activeSteeringSpeed_ = requestedOutput.motorBSpeed;
+
+            output.motorBSpeed = activeSteeringSpeed_;
+
+            ESP_LOGI(TAG, "Steering cooldown finished | new pulse started | steering speed: %d", activeSteeringSpeed_);
+
+            return output;
+        }
+
+        output.motorBSpeed = AppConfig::STEERING_STOP;
+        return output;
+    }
+
+    output.motorBSpeed = AppConfig::STEERING_STOP;
+    return output;
+}
+
+void RobotController::resetSteeringPulse() {
+    if (steeringPulseState_ != SteeringPulseState::Idle) {
+        ESP_LOGI(TAG, "Steering pulse reset");
+    }
+
+    steeringPulseState_ = SteeringPulseState::Idle;
+    activeSteeringSpeed_ = AppConfig::STEERING_STOP;
+    steeringStateStartTimeMs_ = 0;
+}
+
+int64_t RobotController::nowMs() const {
+    return esp_timer_get_time() / 1000;
 }
