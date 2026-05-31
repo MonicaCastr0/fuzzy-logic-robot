@@ -10,6 +10,6 @@ extern "C" void app_main() {
 
     while (true) {
         robot.update();
-        vTaskDelay(pdMS_TO_TICKS(1000));
+        vTaskDelay(pdMS_TO_TICKS(500));
     }
 }
