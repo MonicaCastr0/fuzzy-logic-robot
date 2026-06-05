@@ -94,16 +94,16 @@
     [ "esp:TX0", "$serialMonitor:RX", "", [] ],
     [ "esp:RX0", "$serialMonitor:TX", "", [] ],
 
-    [ "esp:D13", "led_stby:A", "green", [ "h40" ] ],
+    [ "esp:D14", "led_stby:A", "green", [ "h40" ] ],
     [ "led_stby:C", "esp:GND.1", "black", [ "h-20", "v220", "h-360" ] ],
 
     [ "esp:D26", "led_ain1:A", "yellow", [ "h50" ] ],
     [ "led_ain1:C", "esp:GND.1", "black", [ "h-20", "v160", "h-360" ] ],
 
-    [ "esp:D27", "led_ain2:A", "yellow", [ "h60" ] ],
+    [ "esp:D25", "led_ain2:A", "yellow", [ "h60" ] ],
     [ "led_ain2:C", "esp:GND.1", "black", [ "h-20", "v100", "h-360" ] ],
 
-    [ "esp:D25", "led_pwma:A", "blue", [ "h70" ] ],
+    [ "esp:D27", "led_pwma:A", "blue", [ "h70" ] ],
     [ "led_pwma:C", "esp:GND.1", "black", [ "h-20", "v40", "h-360" ] ],
 
     [ "esp:D32", "led_bin1:A", "red", [ "h80" ] ],
@@ -112,7 +112,7 @@
     [ "esp:D33", "led_bin2:A", "red", [ "h90" ] ],
     [ "led_bin2:C", "esp:GND.1", "black", [ "h-20", "v-100", "h-360" ] ],
 
-    [ "esp:D14", "led_pwmb:A", "blue", [ "h100" ] ],
+    [ "esp:D13", "led_pwmb:A", "blue", [ "h100" ] ],
     [ "led_pwmb:C", "esp:GND.1", "black", [ "h-20", "v-160", "h-360" ] ],
   
     [ "esp:VIN", "ultrasonic_front:VCC", "red", [ "h0" ] ],

@@ -22,43 +22,46 @@ void RobotController::init() {
 
 void RobotController::update() {
     if (AppConfig::MOTOR_DRIVER_TEST_MODE) {
-        ESP_LOGI(TAG, "Running motor driver test mode");
+    ESP_LOGI(TAG, "Running physical steering test mode");
 
-        motorDriver_.drive(AppConfig::SPEED_LOW, AppConfig::SPEED_LOW);
-        vTaskDelay(pdMS_TO_TICKS(2000));
+    motorDriver_.enable();
 
-        motorDriver_.drive(AppConfig::SPEED_MEDIUM, AppConfig::SPEED_MEDIUM);
-        vTaskDelay(pdMS_TO_TICKS(2000));
+    ESP_LOGI(TAG, "Test 1: traction forward only");
+    motorDriver_.drive(180, 0);
+    vTaskDelay(pdMS_TO_TICKS(2000));
 
-        motorDriver_.drive(AppConfig::SPEED_HIGH, AppConfig::SPEED_HIGH);
-        vTaskDelay(pdMS_TO_TICKS(2000));
+    ESP_LOGI(TAG, "Test 2: stop and wait");
+    motorDriver_.stop();
+    vTaskDelay(pdMS_TO_TICKS(1500));
 
-        ESP_LOGI(TAG, "Testing reverse");
-        motorDriver_.drive(-AppConfig::SPEED_LOW, -AppConfig::SPEED_LOW);
-        vTaskDelay(pdMS_TO_TICKS(2000));
+    ESP_LOGI(TAG, "Test 3: forward with steering right pulse");
+    motorDriver_.drive(160, AppConfig::STEERING_RIGHT);
+    vTaskDelay(pdMS_TO_TICKS(250));
+    motorDriver_.drive(160, 0);
+    vTaskDelay(pdMS_TO_TICKS(2000));
 
-        ESP_LOGI(TAG, "Testing right turn");
-        motorDriver_.drive(-AppConfig::SPEED_LOW, AppConfig::SPEED_LOW);
-        vTaskDelay(pdMS_TO_TICKS(2000));
+    ESP_LOGI(TAG, "Test 4: stop and wait");
+    motorDriver_.stop();
+    vTaskDelay(pdMS_TO_TICKS(1500));
 
-        ESP_LOGI(TAG, "Testing left turn");
-        motorDriver_.drive(AppConfig::SPEED_LOW, -AppConfig::SPEED_LOW);
-        vTaskDelay(pdMS_TO_TICKS(2000));
+    ESP_LOGI(TAG, "Test 5: forward with steering left pulse");
+    motorDriver_.drive(160, AppConfig::STEERING_LEFT);
+    vTaskDelay(pdMS_TO_TICKS(250));
+    motorDriver_.drive(160, 0);
+    vTaskDelay(pdMS_TO_TICKS(2000));
 
-        ESP_LOGI(TAG, "Motor driver test completed, stopping motors");
-        motorDriver_.stop();
-        vTaskDelay(pdMS_TO_TICKS(2000));
+    ESP_LOGI(TAG, "Test 6: reverse with steering right pulse");
+    motorDriver_.drive(-160, AppConfig::STEERING_RIGHT);
+    vTaskDelay(pdMS_TO_TICKS(250));
+    motorDriver_.drive(-160, 0);
+    vTaskDelay(pdMS_TO_TICKS(1500));
 
-        ESP_LOGI(TAG, "Disabling motor driver after test");
-        motorDriver_.disable();
-        vTaskDelay(pdMS_TO_TICKS(2000));
+    ESP_LOGI(TAG, "Test completed, stopping motors");
+    motorDriver_.stop();
+    vTaskDelay(pdMS_TO_TICKS(3000));
 
-        motorDriver_.enable();
-        vTaskDelay(pdMS_TO_TICKS(2000));
-
-        return;
-    }
-
+    return;
+}
     ESP_LOGI(TAG, "Running robot control cycle");
     const float frontCmDistance = distanceSensor_.readDistanceCm();
 
