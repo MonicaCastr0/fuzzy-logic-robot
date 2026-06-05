@@ -88,7 +88,16 @@
       "attrs": {
         "distance": "100"
       }
+    },
+    {
+    "type": "wokwi-hc-sr04",
+    "id": "ultrasonic_rear",
+    "top": 260,
+    "left": -20,
+    "attrs": {
+      "distance": "100"
     }
+  }
   ],
   "connections": [
     [ "esp:TX0", "$serialMonitor:RX", "", [] ],
@@ -118,7 +127,12 @@
     [ "esp:VIN", "ultrasonic_front:VCC", "red", [ "h0" ] ],
     [ "esp:GND.2", "ultrasonic_front:GND", "black", [ "h0" ] ],
     [ "esp:D19", "ultrasonic_front:TRIG", "green", [ "h0" ] ],
-    [ "esp:D18", "ultrasonic_front:ECHO", "blue", [ "h0" ] ]
+    [ "esp:D18", "ultrasonic_front:ECHO", "blue", [ "h0" ] ],
+
+    [ "esp:VIN", "ultrasonic_rear:VCC", "red", [ "h0" ] ],
+    [ "esp:GND.2", "ultrasonic_rear:GND", "black", [ "h0" ] ],
+    [ "esp:D21", "ultrasonic_rear:TRIG", "green", [ "h0" ] ],
+    [ "esp:D22", "ultrasonic_rear:ECHO", "blue", [ "h0" ] ]
   ],
   "serialMonitor": {
     "display": "terminal"

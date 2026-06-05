@@ -6,10 +6,16 @@
 namespace AppConfig {
 
 // ===============================
-// HC-SR04 - distance sensor - GPIO configuration
+// HC-SR04 - FRONT distance sensor - GPIO configuration
 // ===============================
-static constexpr gpio_num_t TRIG_PIN = GPIO_NUM_19;
-static constexpr gpio_num_t ECHO_PIN = GPIO_NUM_18;
+static constexpr gpio_num_t FRONT_TRIG_PIN = GPIO_NUM_19;
+static constexpr gpio_num_t FRONT_ECHO_PIN = GPIO_NUM_18;
+
+// ===============================
+// HC-SR04 - REAR distance sensor - GPIO configuration
+// ===============================
+static constexpr gpio_num_t REAR_TRIG_PIN = GPIO_NUM_21;
+static constexpr gpio_num_t REAR_ECHO_PIN = GPIO_NUM_22;
 
 // ===============================
 // TB6612FNG - motor driver - A Channel / A Motor
@@ -58,6 +64,11 @@ static constexpr float OBSTACLE_NEAR_CM = 35.0f;
 static constexpr float OBSTACLE_CAUTION_CM = 70.0f;
 
 // ===============================
+// Rear safety threshold
+// ===============================
+static constexpr float REAR_SAFE_REVERSE_CM = 25.0f;
+
+// ===============================
 // Traction/steering semantic speeds
 // Motor A = rear traction
 // Motor B = front steering
@@ -75,7 +86,7 @@ static constexpr int STEERING_LEFT = -STEERING_SPEED;
 // ===============================
 // test flag for the RobotController, if true it will run a motor test
 // ===============================
-static constexpr bool MOTOR_DRIVER_TEST_MODE = true;
+static constexpr bool MOTOR_DRIVER_TEST_MODE = false;
 
 // ===============================
 // Main control loop

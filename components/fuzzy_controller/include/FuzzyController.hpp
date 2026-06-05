@@ -2,6 +2,7 @@
 
 struct FuzzyInput {
     float frontDistanceCm;
+    float rearDistanceCm;
 };
 
 struct FuzzyOutput {
