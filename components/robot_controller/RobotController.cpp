@@ -8,10 +8,21 @@
 static const char* TAG = "RobotController";
 
 
-RobotController::RobotController() = default;
+RobotController::RobotController()
+    : frontDistanceSensor_(
+        AppConfig::FRONT_TRIG_PIN,
+        AppConfig::FRONT_ECHO_PIN, 
+        "FrontSensor"
+    ),
+      rearDistanceSensor_(
+        AppConfig::REAR_TRIG_PIN,
+        AppConfig::REAR_ECHO_PIN,
+        "RearSensor"
+      ) {}
 
 void RobotController::init() {
-    distanceSensor_.init();
+    frontDistanceSensor_.init();
+    rearDistanceSensor_.init();
     motorDriver_.init();
     fuzzyController_.init();
 
@@ -63,10 +74,15 @@ void RobotController::update() {
     return;
 }
     ESP_LOGI(TAG, "Running robot control cycle");
-    const float frontCmDistance = distanceSensor_.readDistanceCm();
+    const float frontCmDistance = frontDistanceSensor_.readDistanceCm();
+
+    vTaskDelay(pdMS_TO_TICKS(50)); // small delay between sensor readings
+
+    const float rearCmDistance = rearDistanceSensor_.readDistanceCm();
 
     FuzzyInput input{};
     input.frontDistanceCm = frontCmDistance;
+    input.rearDistanceCm = rearCmDistance;
 
     const FuzzyOutput requestedOutput = fuzzyController_.evaluate(input);
     const FuzzyOutput safeOutput = applySteeringPulseControl(requestedOutput);

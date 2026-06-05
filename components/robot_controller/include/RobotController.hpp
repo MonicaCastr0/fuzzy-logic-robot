@@ -19,7 +19,8 @@ private:
         Cooldown
     };
 
-    DistanceSensor distanceSensor_;
+    DistanceSensor frontDistanceSensor_;
+    DistanceSensor rearDistanceSensor_;
     MotorDriver motorDriver_;
     FuzzyController fuzzyController_;
 
