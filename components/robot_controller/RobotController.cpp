@@ -35,37 +35,70 @@ void RobotController::update() {
     if (AppConfig::MOTOR_DRIVER_TEST_MODE) {
     ESP_LOGI(TAG, "Running physical steering test mode");
 
-    motorDriver_.enable();
+    // motorDriver_.drive(180, AppConfig::STEERING_SPEED);
+    // vTaskDelay(pdMS_TO_TICKS(500));
+    // motorDriver_.drive(180, -AppConfig::STEERING_SPEED);
+    // vTaskDelay(pdMS_TO_TICKS(500));
+    // motorDriver_.disable();
+    // vTaskDelay(pdMS_TO_TICKS(1500));
 
-    ESP_LOGI(TAG, "Test 1: traction forward only");
-    motorDriver_.drive(180, 0);
-    vTaskDelay(pdMS_TO_TICKS(2000));
+    // ESP_LOGI(TAG, "Test 1: traction forward only");
+    // motorDriver_.drive(180, 0);
+    // vTaskDelay(pdMS_TO_TICKS(2000));
 
-    ESP_LOGI(TAG, "Test 2: stop and wait");
-    motorDriver_.stop();
-    vTaskDelay(pdMS_TO_TICKS(1500));
+    // ESP_LOGI(TAG, "Test 2: stop and wait");
+    // motorDriver_.stop();
+    // vTaskDelay(pdMS_TO_TICKS(1500));
 
-    ESP_LOGI(TAG, "Test 3: forward with steering right pulse");
-    motorDriver_.drive(160, AppConfig::STEERING_RIGHT);
-    vTaskDelay(pdMS_TO_TICKS(250));
-    motorDriver_.drive(160, 0);
-    vTaskDelay(pdMS_TO_TICKS(2000));
+    ESP_LOGI(TAG, "Test 3: sustained right curve");
+
+    // Pre-steer right
+    motorDriver_.drive(0, AppConfig::STEERING_RIGHT);
+    vTaskDelay(pdMS_TO_TICKS(200));
+
+    // Move while keeping steering active
+    motorDriver_.drive(140, AppConfig::STEERING_RIGHT);
+    vTaskDelay(pdMS_TO_TICKS(3000));
+
+    // Release steering and keep moving forward
+    motorDriver_.drive(140, 0);
+    vTaskDelay(pdMS_TO_TICKS(700));
 
     ESP_LOGI(TAG, "Test 4: stop and wait");
     motorDriver_.stop();
     vTaskDelay(pdMS_TO_TICKS(1500));
 
-    ESP_LOGI(TAG, "Test 5: forward with steering left pulse");
-    motorDriver_.drive(160, AppConfig::STEERING_LEFT);
-    vTaskDelay(pdMS_TO_TICKS(250));
-    motorDriver_.drive(160, 0);
-    vTaskDelay(pdMS_TO_TICKS(2000));
+    ESP_LOGI(TAG, "Test 5: sustained left curve");
 
-    ESP_LOGI(TAG, "Test 6: reverse with steering right pulse");
-    motorDriver_.drive(-160, AppConfig::STEERING_RIGHT);
-    vTaskDelay(pdMS_TO_TICKS(250));
-    motorDriver_.drive(-160, 0);
+    // Pre-steer left
+    motorDriver_.drive(0, AppConfig::STEERING_LEFT);
+    vTaskDelay(pdMS_TO_TICKS(200));
+
+    // Move while keeping steering active
+    motorDriver_.drive(140, AppConfig::STEERING_LEFT);
+    vTaskDelay(pdMS_TO_TICKS(3000));
+
+    // Release steering and keep moving forward
+    motorDriver_.drive(140, 0);
+    vTaskDelay(pdMS_TO_TICKS(700));
+
+    ESP_LOGI(TAG, "Test 6: stop and wait");
+    motorDriver_.stop();
     vTaskDelay(pdMS_TO_TICKS(1500));
+
+    ESP_LOGI(TAG, "Test 7: sustained reverse right curve");
+
+    // Pre-steer right
+    motorDriver_.drive(0, AppConfig::STEERING_RIGHT);
+    vTaskDelay(pdMS_TO_TICKS(200));
+
+    // Reverse while keeping steering active
+    motorDriver_.drive(-140, AppConfig::STEERING_RIGHT);
+    vTaskDelay(pdMS_TO_TICKS(3000));
+
+    // Release steering and keep reversing
+    motorDriver_.drive(-140, 0);
+    vTaskDelay(pdMS_TO_TICKS(700));
 
     ESP_LOGI(TAG, "Test completed, stopping motors");
     motorDriver_.stop();
