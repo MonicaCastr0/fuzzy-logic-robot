@@ -53,7 +53,7 @@ static constexpr ledc_mode_t MOTOR_PWM_MODE = LEDC_LOW_SPEED_MODE;
 // ===============================
 static constexpr int SPEED_STOP = 0;
 static constexpr int SPEED_LOW = 80;
-static constexpr int SPEED_MEDIUM = 140;
+static constexpr int SPEED_MEDIUM = 180;
 static constexpr int SPEED_HIGH = 200;
 
 // ===============================
@@ -78,7 +78,7 @@ static constexpr int TRACTION_SLOW = SPEED_LOW;
 static constexpr int TRACTION_CRUISE = SPEED_MEDIUM;
 
 static constexpr int STEERING_STOP = SPEED_STOP;
-static constexpr int STEERING_SPEED = 50;
+static constexpr int STEERING_SPEED = PWM_MAX_DUTY;
 
 static constexpr int STEERING_RIGHT = STEERING_SPEED;
 static constexpr int STEERING_LEFT = -STEERING_SPEED;
@@ -96,7 +96,7 @@ static constexpr int ROBOT_UPDATE_INTERVAL_MS = 200;
 // ===============================
 // Steering pulse control
 // ===============================
-static constexpr int STEERING_PULSE_DURATION_MS = 1000;
-static constexpr int STEERING_PULSE_COOLDOWN_MS = 800;
+static constexpr int STEERING_PULSE_DURATION_MS = 3000;
+static constexpr int STEERING_PULSE_COOLDOWN_MS = 600;
 
 }

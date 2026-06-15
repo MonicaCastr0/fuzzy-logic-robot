@@ -50,7 +50,7 @@ FuzzyOutput FuzzyController::evaluate(const FuzzyInput& input) {
         }
 
         ESP_LOGI(TAG, "Decision: front obstacle near and rear clear -> reverse and turn right");
-        output.motorASpeed = -AppConfig::TRACTION_SLOW;
+        output.motorASpeed = -AppConfig::TRACTION_CRUISE;
         output.motorBSpeed = AppConfig::STEERING_RIGHT;
         return output;
     }
