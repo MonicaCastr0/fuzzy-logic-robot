@@ -27,14 +27,14 @@ FuzzyOutput FuzzyController::evaluate(const FuzzyInput& input) {
         return output;
     }
 
-    if (frontDistance <= AppConfig::OBSTACLE_TOO_CLOSE_CM) {
+    if (frontDistance <= AppConfig::FRONT_TOO_CLOSE_CM) {
         ESP_LOGI(TAG, "Decision: obstacle too close -> stop");
         output.motorASpeed = AppConfig::TRACTION_STOP;
         output.motorBSpeed = AppConfig::STEERING_STOP;
         return output;
     }
 
-    if (frontDistance <= AppConfig::OBSTACLE_NEAR_CM) {
+    if (frontDistance <= AppConfig::FRONT_REVERSE_CM) {
         if (rearDistance < 0.0f) {
             ESP_LOGW(TAG, "Decision: front obstacle near but rear distance invalid -> stop");
             output.motorASpeed = AppConfig::TRACTION_STOP;
@@ -50,13 +50,20 @@ FuzzyOutput FuzzyController::evaluate(const FuzzyInput& input) {
         }
 
         ESP_LOGI(TAG, "Decision: front obstacle near and rear clear -> reverse and turn right");
-        output.motorASpeed = -AppConfig::TRACTION_CRUISE;
+        output.motorASpeed = -AppConfig::TRACTION_REVERSE_ESCAPE;
+        output.motorBSpeed = AppConfig::STEERING_LEFT;
+        return output;
+    }
+
+    if (frontDistance <= AppConfig::FRONT_PREVENTIVE_AVOID_CM) {
+        ESP_LOGI(TAG, "Decision: caution zone -> move slowly");
+        output.motorASpeed = AppConfig::TRACTION_PREVENTIVE_AVOID;
         output.motorBSpeed = AppConfig::STEERING_RIGHT;
         return output;
     }
 
-    if (frontDistance <= AppConfig::OBSTACLE_CAUTION_CM) {
-        ESP_LOGI(TAG, "Decision: caution zone -> move slowly");
+    if (frontDistance <= AppConfig::FRONT_SLOWDOWN_CM) {
+        ESP_LOGI(TAG, "Decision: slowdown zone -> move slowly foward");
         output.motorASpeed = AppConfig::TRACTION_SLOW;
         output.motorBSpeed = AppConfig::STEERING_STOP;
         return output;
