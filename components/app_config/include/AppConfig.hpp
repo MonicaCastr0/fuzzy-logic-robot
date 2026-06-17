@@ -52,16 +52,17 @@ static constexpr ledc_mode_t MOTOR_PWM_MODE = LEDC_LOW_SPEED_MODE;
 // base speeds for the motors (0-255)
 // ===============================
 static constexpr int SPEED_STOP = 0;
-static constexpr int SPEED_LOW = 80;
+static constexpr int SPEED_LOW = 120;
 static constexpr int SPEED_MEDIUM = 180;
-static constexpr int SPEED_HIGH = 200;
+static constexpr int SPEED_HIGH = 230;
 
 // ===============================
-// Basic obstacle avoidance thresholds - can be changed later or made more complex with fuzzy logic
+// Calibrated obstacle avoidance thresholds
 // ===============================
-static constexpr float OBSTACLE_TOO_CLOSE_CM = 15.0f;
-static constexpr float OBSTACLE_NEAR_CM = 35.0f;
-static constexpr float OBSTACLE_CAUTION_CM = 70.0f;
+static constexpr float FRONT_TOO_CLOSE_CM = 15.0f;
+static constexpr float FRONT_REVERSE_CM = 35.0f;
+static constexpr float FRONT_PREVENTIVE_AVOID_CM = 70.0f;
+static constexpr float FRONT_SLOWDOWN_CM = 100.0f;
 
 // ===============================
 // Rear safety threshold
@@ -75,7 +76,10 @@ static constexpr float REAR_SAFE_REVERSE_CM = 25.0f;
 // ===============================
 static constexpr int TRACTION_STOP = SPEED_STOP;
 static constexpr int TRACTION_SLOW = SPEED_LOW;
-static constexpr int TRACTION_CRUISE = SPEED_MEDIUM;
+static constexpr int TRACTION_CRUISE = SPEED_HIGH;
+
+static constexpr int TRACTION_PREVENTIVE_AVOID = 180;
+static constexpr int TRACTION_REVERSE_ESCAPE = 180;
 
 static constexpr int STEERING_STOP = SPEED_STOP;
 static constexpr int STEERING_SPEED = PWM_MAX_DUTY;
@@ -96,7 +100,7 @@ static constexpr int ROBOT_UPDATE_INTERVAL_MS = 200;
 // ===============================
 // Steering pulse control
 // ===============================
-static constexpr int STEERING_PULSE_DURATION_MS = 3000;
+static constexpr int STEERING_PULSE_DURATION_MS = 1500;
 static constexpr int STEERING_PULSE_COOLDOWN_MS = 600;
 
 }

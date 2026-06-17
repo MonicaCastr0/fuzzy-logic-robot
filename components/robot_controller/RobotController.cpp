@@ -133,6 +133,14 @@ FuzzyOutput RobotController::applySteeringPulseControl(const FuzzyOutput& reques
         return output;
     }
 
+    const bool isMovingForward = requestedOutput.motorASpeed > AppConfig::TRACTION_STOP;
+
+    if (isMovingForward) {
+        resetSteeringPulse();
+        ESP_LOGI(TAG, "Sustained steering allowed for forward preventive avoidance");
+        return output;
+    }
+
     const int64_t currentTimeMs = nowMs();
 
     if (steeringPulseState_ == SteeringPulseState::Idle) {
