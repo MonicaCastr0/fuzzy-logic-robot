@@ -62,7 +62,7 @@ static constexpr int SPEED_HIGH = 230;
 static constexpr float FRONT_TOO_CLOSE_CM = 15.0f;
 static constexpr float FRONT_REVERSE_CM = 35.0f;
 static constexpr float FRONT_PREVENTIVE_AVOID_CM = 70.0f;
-static constexpr float FRONT_SLOWDOWN_CM = 100.0f;
+static constexpr float FRONT_SLOWDOWN_CM = 90.0f;
 
 // ===============================
 // Rear safety threshold
