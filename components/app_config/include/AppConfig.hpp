@@ -52,7 +52,7 @@ static constexpr ledc_mode_t MOTOR_PWM_MODE = LEDC_LOW_SPEED_MODE;
 // base speeds for the motors (0-255)
 // ===============================
 static constexpr int SPEED_STOP = 0;
-static constexpr int SPEED_LOW = 120;
+static constexpr int SPEED_LOW = 145;
 static constexpr int SPEED_MEDIUM = 180;
 static constexpr int SPEED_HIGH = 230;
 
