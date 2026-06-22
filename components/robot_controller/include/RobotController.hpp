@@ -4,7 +4,10 @@
 #include "MotorDriver.hpp"
 #include "FuzzyController.hpp"
 
-class RobotController {
+#include <cstdint>
+
+class RobotController
+{
 public:
     RobotController();
 
@@ -12,23 +15,41 @@ public:
     void update();
 
 private:
-
-    enum class SteeringPulseState{
-        Idle,
-        Pulsing,
-        Cooldown
-    };
-
+    // ===============================
+    // Sensors
+    // ===============================
     DistanceSensor frontDistanceSensor_;
     DistanceSensor rearDistanceSensor_;
+
+    // ===============================
+    // Core modules
+    // ===============================
     MotorDriver motorDriver_;
     FuzzyController fuzzyController_;
 
-    SteeringPulseState steeringPulseState_{SteeringPulseState::Idle};
-    int activeSteeringSpeed_{0};
-    int64_t steeringStateStartTimeMs_{0};
+    // ===============================
+    // Behavior state machine
+    // ===============================
+    enum class ManeuverState
+    {
+        IDLE,
+        FORWARD,
+        AVOIDING_FORWARD,
+        REVERSING
+    };
 
-    FuzzyOutput applySteeringPulseControl(const FuzzyOutput& fuzzyOutput);
-    void resetSteeringPulse();
+    ManeuverState state_{ManeuverState::IDLE};
+    int64_t stateStartMs_{0};
+
+    // ===============================
+    // Control pipeline
+    // ===============================
+    FuzzyOutput postProcessControl(const FuzzyOutput &input);
+
+    void updateState(const FuzzyOutput &input);
+
+    // ===============================
+    // Utilities
+    // ===============================
     int64_t nowMs() const;
 };
