@@ -58,6 +58,12 @@ namespace AppConfig
     static constexpr int SPEED_HIGH = 230;
 
     // ===============================
+    // Traction output limits
+    // ===============================
+    static constexpr int TRACTION_FORWARD_MAX_OUTPUT = 140;
+    static constexpr int TRACTION_REVERSE_MAX_OUTPUT = 190;
+
+    // ===============================
     // Calibrated obstacle avoidance thresholds
     // ===============================
     static constexpr float FRONT_TOO_CLOSE_CM = 15.0f;
@@ -76,10 +82,10 @@ namespace AppConfig
     // Motor B = front steering
     // ===============================
     static constexpr int TRACTION_STOP = SPEED_STOP;
-    static constexpr int TRACTION_SLOW = SPEED_LOW;
-    static constexpr int TRACTION_CRUISE = SPEED_HIGH;
+    static constexpr int TRACTION_SLOW = 90;
+    static constexpr int TRACTION_CRUISE = 140;
 
-    static constexpr int TRACTION_PREVENTIVE_AVOID = 180;
+    static constexpr int TRACTION_PREVENTIVE_AVOID = 120;
     static constexpr int TRACTION_REVERSE_ESCAPE = 180;
 
     static constexpr int STEERING_STOP = SPEED_STOP;
