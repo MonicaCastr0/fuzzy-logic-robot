@@ -86,8 +86,7 @@ namespace
     {
         return std::max(
             -AppConfig::TRACTION_REVERSE_MAX_OUTPUT,
-            std::min(AppConfig::TRACTION_FORWARD_MAX_OUTPUT, value)
-        );
+            std::min(AppConfig::TRACTION_FORWARD_MAX_OUTPUT, value));
     }
 
     int quantizeSteering(float steeringValue)
@@ -106,6 +105,20 @@ namespace
         }
 
         return AppConfig::STEERING_STOP;
+    }
+
+    int applyMinimumTraction(int value)
+    {
+        if (value > 0 && value < AppConfig::TRACTION_MIN_FORWARD_OUTPUT)
+        {
+            return AppConfig::TRACTION_MIN_FORWARD_OUTPUT;
+        }
+        if (value < 0 && -AppConfig::TRACTION_MIN_REVERSE_OUTPUT)
+        {
+            return AppConfig::TRACTION_MIN_REVERSE_OUTPUT;
+        }
+
+        return value;
     }
 
     struct FuzzyAccumulator
@@ -149,8 +162,7 @@ FuzzyOutput FuzzyController::evaluate(const FuzzyInput &input)
         TAG,
         "Input | front=%.2f cm | rear=%.2f cm",
         front,
-        rear
-    );
+        rear);
 
     if (!frontValid)
     {
@@ -166,25 +178,25 @@ FuzzyOutput FuzzyController::evaluate(const FuzzyInput &input)
     // FUZZIFICATION - FRONT DISTANCE
     // ===============================
     const float frontVeryClose = leftShoulder(front, 10.0f, 20.0f);
-    const float frontNear = triangle(front, 15.0f, 30.0f, 45.0f);
-    const float frontAvoid = triangle(front, 35.0f, 60.0f, 80.0f);
-    const float frontSlow = triangle(front, 65.0f, 85.0f, 105.0f);
+    const float frontNear = triangle(front, 15.0f, 30.0f, 40.0f);
+    const float frontAvoid = triangle(front, 30.0f, 50.0f, 70.0f);
+    const float frontSlow = triangle(front, 55.0f, 75.0f, 95.0f);
 
     // Open-ended clear region:
     // once front distance is high enough, the robot should keep cruising.
-    const float frontClear = rightShoulder(front, 80.0f, 110.0f);
+    const float frontClear = rightShoulder(front, 70.0f, 90.0f);
 
     // ===============================
     // FUZZIFICATION - REAR DISTANCE
     // ===============================
     // If rear reading is invalid, rear is treated as blocked for safety.
     const float rearBlocked = rearValid
-        ? leftShoulder(rear, 20.0f, 35.0f)
-        : 1.0f;
+                                  ? leftShoulder(rear, 20.0f, 35.0f)
+                                  : 1.0f;
 
     const float rearFree = rearValid
-        ? rightShoulder(rear, 25.0f, 45.0f)
-        : 0.0f;
+                               ? rightShoulder(rear, 25.0f, 45.0f)
+                               : 0.0f;
 
     ESP_LOGI(
         TAG,
@@ -195,8 +207,7 @@ FuzzyOutput FuzzyController::evaluate(const FuzzyInput &input)
         frontSlow,
         frontClear,
         rearBlocked,
-        rearFree
-    );
+        rearFree);
 
     // ===============================
     // RULE EVALUATION
@@ -216,8 +227,7 @@ FuzzyOutput FuzzyController::evaluate(const FuzzyInput &input)
         ruleBlockedStop,
         ruleAvoidRight,
         ruleSlow,
-        ruleCruise
-    );
+        ruleCruise);
 
     // ===============================
     // DEFUZZIFICATION BY WEIGHTED AVERAGE
@@ -227,38 +237,32 @@ FuzzyOutput FuzzyController::evaluate(const FuzzyInput &input)
     acc.addRule(
         ruleStop,
         AppConfig::TRACTION_STOP,
-        AppConfig::STEERING_STOP
-    );
+        AppConfig::STEERING_STOP);
 
     acc.addRule(
         ruleReverseLeft,
         -AppConfig::TRACTION_REVERSE_ESCAPE,
-        AppConfig::STEERING_LEFT
-    );
+        AppConfig::STEERING_LEFT);
 
     acc.addRule(
         ruleBlockedStop,
         AppConfig::TRACTION_STOP,
-        AppConfig::STEERING_STOP
-    );
+        AppConfig::STEERING_STOP);
 
     acc.addRule(
         ruleAvoidRight,
         AppConfig::TRACTION_PREVENTIVE_AVOID,
-        AppConfig::STEERING_RIGHT
-    );
+        AppConfig::STEERING_RIGHT);
 
     acc.addRule(
         ruleSlow,
         AppConfig::TRACTION_SLOW,
-        AppConfig::STEERING_STOP
-    );
+        AppConfig::STEERING_STOP);
 
     acc.addRule(
         ruleCruise,
         AppConfig::TRACTION_CRUISE,
-        AppConfig::STEERING_STOP
-    );
+        AppConfig::STEERING_STOP);
 
     // ===============================
     // SAFETY FALLBACK
@@ -279,7 +283,10 @@ FuzzyOutput FuzzyController::evaluate(const FuzzyInput &input)
     const float steering =
         acc.steeringWeightedSum / acc.weightSum;
 
-    output.motorASpeed = clampTractionCommand(roundToInt(traction));
+    const int rawTraction = roundToInt(traction);
+    const int tractionWithMinimum = applyMinimumTraction(rawTraction);
+
+    output.motorASpeed = clampTractionCommand(tractionWithMinimum);
     output.motorBSpeed = quantizeSteering(steering);
 
     ESP_LOGI(
@@ -288,8 +295,7 @@ FuzzyOutput FuzzyController::evaluate(const FuzzyInput &input)
         traction,
         output.motorASpeed,
         steering,
-        output.motorBSpeed
-    );
+        output.motorBSpeed);
 
     return output;
 }
