@@ -20,17 +20,19 @@ namespace AppConfig
 
     // ===============================
     // TB6612FNG - motor driver - A Channel / A Motor
+    // Motor A = rear traction motor
     // ===============================
-    static constexpr gpio_num_t AIN1_PIN = GPIO_NUM_26; // GPIO pin for controlling the direction of motor A (forward/reverse)
-    static constexpr gpio_num_t AIN2_PIN = GPIO_NUM_25; // GPIO pin for controlling the direction of motor A (forward/reverse)
-    static constexpr gpio_num_t PWMA_PIN = GPIO_NUM_27; // GPIO pin for controlling the speed of motor A
+    static constexpr gpio_num_t AIN1_PIN = GPIO_NUM_26;
+    static constexpr gpio_num_t AIN2_PIN = GPIO_NUM_25;
+    static constexpr gpio_num_t PWMA_PIN = GPIO_NUM_27;
 
     // ===============================
     // TB6612FNG - motor driver - B Channel / B Motor
+    // Motor B = front steering motor
     // ===============================
-    static constexpr gpio_num_t BIN1_PIN = GPIO_NUM_32; // GPIO pin for controlling the direction of motor B (forward/reverse)
-    static constexpr gpio_num_t BIN2_PIN = GPIO_NUM_33; // GPIO pin for controlling the direction of motor B (forward/reverse)
-    static constexpr gpio_num_t PWMB_PIN = GPIO_NUM_13; // GPIO pin for controlling the speed of motor B
+    static constexpr gpio_num_t BIN1_PIN = GPIO_NUM_32;
+    static constexpr gpio_num_t BIN2_PIN = GPIO_NUM_33;
+    static constexpr gpio_num_t PWMB_PIN = GPIO_NUM_13;
 
     // ===============================
     // TB6612FNG - motor driver - Standby
@@ -50,7 +52,7 @@ namespace AppConfig
     static constexpr ledc_mode_t MOTOR_PWM_MODE = LEDC_LOW_SPEED_MODE;
 
     // ===============================
-    // base speeds for the motors (0-255)
+    // Base speeds for manual tests
     // ===============================
     static constexpr int SPEED_STOP = 0;
     static constexpr int SPEED_LOW = 145;
@@ -60,11 +62,43 @@ namespace AppConfig
     // ===============================
     // Traction output limits
     // ===============================
-    static constexpr int TRACTION_FORWARD_MAX_OUTPUT = 220;
-    static constexpr int TRACTION_REVERSE_MAX_OUTPUT = 255;
+    // These values define the normal navigation range after the start boost.
+    // Do not use 255 as normal cruise speed, because it makes the robot too fast.
+    static constexpr int TRACTION_FORWARD_MAX_OUTPUT = 170;
+    static constexpr int TRACTION_REVERSE_MAX_OUTPUT = 180;
 
-    static constexpr int TRACTION_MIN_FORWARD_OUTPUT = 150;
-    static constexpr int TRACTION_MIN_REVERSE_OUTPUT = 255;
+    // ===============================
+    // Traction minimum operational output
+    // ===============================
+    // These values prevent weak fuzzy outputs from being too low to move the robot.
+    // They are not start-boost values.
+    static constexpr int TRACTION_MIN_FORWARD_OUTPUT = 120;
+    static constexpr int TRACTION_MIN_REVERSE_OUTPUT = 140;
+
+    // ===============================
+    // Traction start boost
+    // ===============================
+    // The robot receives a short 255 PWM pulse only when leaving rest.
+    // After that, it returns to the fuzzy target speed.
+    static constexpr bool TRACTION_START_BOOST_ENABLED = true;
+    static constexpr int TRACTION_START_BOOST_DUTY = PWM_MAX_DUTY;
+    static constexpr int TRACTION_START_BOOST_DURATION_MS = 90;
+
+    // ===============================
+    // Traction ramp profile
+    // ===============================
+    // Acceleration should be slower than deceleration.
+    // This helps the robot avoid obstacles without carrying too much speed.
+    static constexpr int TRACTION_ACCEL_STEP = 15;
+    static constexpr int TRACTION_DECEL_STEP = 45;
+
+    // ===============================
+    // Boost and emergency safety distances
+    // ===============================
+    // Forward boost is only allowed if the front is reasonably free.
+    // Reverse boost is allowed when escaping.
+    static constexpr float TRACTION_BOOST_MIN_FRONT_DISTANCE_CM = 55.0f;
+    static constexpr float TRACTION_EMERGENCY_STOP_DISTANCE_CM = 18.0f;
 
     // ===============================
     // Calibrated obstacle avoidance thresholds
@@ -85,11 +119,12 @@ namespace AppConfig
     // Motor B = front steering
     // ===============================
     static constexpr int TRACTION_STOP = SPEED_STOP;
-    static constexpr int TRACTION_SLOW = 120;
-    static constexpr int TRACTION_CRUISE = TRACTION_FORWARD_MAX_OUTPUT;
 
-    static constexpr int TRACTION_PREVENTIVE_AVOID = 180;
-    static constexpr int TRACTION_REVERSE_ESCAPE = 255;
+    static constexpr int TRACTION_SLOW = 120;
+    static constexpr int TRACTION_CRUISE = 160;
+
+    static constexpr int TRACTION_PREVENTIVE_AVOID = 135;
+    static constexpr int TRACTION_REVERSE_ESCAPE = 160;
 
     static constexpr int STEERING_STOP = SPEED_STOP;
     static constexpr int STEERING_SPEED = PWM_MAX_DUTY;
@@ -98,14 +133,16 @@ namespace AppConfig
     static constexpr int STEERING_LEFT = -STEERING_SPEED;
 
     // ===============================
-    // test flag for the RobotController, if true it will run a motor test
+    // Test flag for the RobotController
     // ===============================
     static constexpr bool MOTOR_DRIVER_TEST_MODE = false;
 
     // ===============================
     // Main control loop
     // ===============================
-    static constexpr int ROBOT_UPDATE_INTERVAL_MS = 200;
+    // Important: the boost duration depends on the update frequency.
+    // Use 100 ms or less for better behavior.
+    static constexpr int ROBOT_UPDATE_INTERVAL_MS = 100;
 
     // ===============================
     // Steering pulse control

@@ -1,8 +1,10 @@
 #pragma once
 
-#include "FuzzyController.hpp"
-#include "MotorDriver.hpp"
 #include "DistanceSensor.hpp"
+#include "MotorDriver.hpp"
+#include "FuzzyController.hpp"
+
+#include <cstdint>
 
 class RobotController
 {
@@ -13,15 +15,6 @@ public:
     void update();
 
 private:
-    FuzzyController fuzzyController_;
-    MotorDriver motorDriver_;
-
-    DistanceSensor frontDistanceSensor_;
-    DistanceSensor rearDistanceSensor_;
-
-    // ===============================
-    // Maneuver state machine (physical layer)
-    // ===============================
     enum class ManeuverState
     {
         IDLE,
@@ -29,15 +22,27 @@ private:
         COOLDOWN
     };
 
-    ManeuverState maneuverState_ = ManeuverState::IDLE;
+    DistanceSensor frontDistanceSensor_;
+    DistanceSensor rearDistanceSensor_;
+    MotorDriver motorDriver_;
+    FuzzyController fuzzyController_;
 
-    int64_t maneuverStartMs_ = 0;
-    int activeSteering_ = 0;
+    ManeuverState maneuverState_{ManeuverState::IDLE};
+    int64_t maneuverStartMs_{0};
+    int activeSteering_{0};
 
     // ===============================
-    // Steering persistence layer
+    // Traction profile state
     // ===============================
-    FuzzyOutput applySteeringControl(const FuzzyOutput &input);
-    void resetManeuver();
+    int lastAppliedTraction_{0};
+    bool startBoostActive_{false};
+    int startBoostDirection_{0};
+    int64_t startBoostStartMs_{0};
+
     int64_t nowMs() const;
+
+    void resetManeuver();
+
+    FuzzyOutput applySteeringControl(const FuzzyOutput &input);
+    int applyTractionProfile(int targetTraction, float frontDistanceCm);
 };

@@ -177,14 +177,14 @@ FuzzyOutput FuzzyController::evaluate(const FuzzyInput &input)
     // ===============================
     // FUZZIFICATION - FRONT DISTANCE
     // ===============================
-    const float frontVeryClose = leftShoulder(front, 10.0f, 20.0f);
-    const float frontNear = triangle(front, 15.0f, 30.0f, 40.0f);
-    const float frontAvoid = triangle(front, 30.0f, 50.0f, 70.0f);
-    const float frontSlow = triangle(front, 55.0f, 75.0f, 95.0f);
-
+    const float frontVeryClose = leftShoulder(front, 12.0f, 25.0f);
+    const float frontNear      = triangle(front, 20.0f, 40.0f, 65.0f);
+    const float frontAvoid     = triangle(front, 50.0f, 90.0f, 130.0f);
+    const float frontSlow      = triangle(front, 110.0f, 150.0f, 190.0f);
+    
     // Open-ended clear region:
     // once front distance is high enough, the robot should keep cruising.
-    const float frontClear = rightShoulder(front, 70.0f, 90.0f);
+    const float frontClear     = rightShoulder(front, 170.0f, 210.0f);
 
     // ===============================
     // FUZZIFICATION - REAR DISTANCE
